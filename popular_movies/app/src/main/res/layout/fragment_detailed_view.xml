@@ -1,0 +1,43 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:isScrollContainer="true"
+        tools:context="com.infinity.popularmovies.DetailedViewActivityFragment"
+        tools:showIn="@layout/activity_detailed_view">
+
+        <ImageView android:id="@+id/img_poster_view_large"
+            android:contentDescription="Large poster display of selected movie"
+            android:layout_width="@dimen/image_poster_default_width"
+            android:layout_height="@dimen/image_poster_default_height"
+            android:clickable="false" android:padding="5dp" />
+
+        <TextView android:id="@+id/txt_movie_name_detailed"
+            android:layout_below="@id/img_poster_view_large"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textAlignment="center" android:textSize="24sp"
+            android:layout_centerHorizontal="true" />
+
+        <TextView android:id="@+id/txt_movie_rating"
+            android:layout_toLeftOf="@id/txt_movie_name_detailed" android:layout_below="@id/img_poster_view_large"
+            android:layout_width="@dimen/text_movie_name_default_width"
+            android:layout_height="wrap_content" android:layout_alignBaseline="@id/txt_movie_name_detailed"
+            android:maxLines="7" android:ellipsize="end" android:textSize="14sp"/>
+
+        <TextView android:id="@+id/txt_movie_plot"
+            android:layout_below="@id/txt_movie_name_detailed"
+            android:layout_width="@dimen/text_movie_name_default_width"
+            android:layout_height="wrap_content"
+            android:maxLines="7" android:ellipsize="end" android:textSize="16sp"/>
+
+    </RelativeLayout>
+
+</ScrollView>

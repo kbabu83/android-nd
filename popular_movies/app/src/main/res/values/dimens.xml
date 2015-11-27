@@ -1,0 +1,13 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="image_grid_horizontal_margin">3dp</dimen>
+    <dimen name="image_grid_vertical_margin">3dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+
+    <!-- Dimensions for Items in the Detailed view -->
+    <dimen name="image_poster_default_width">300dp</dimen>
+    <dimen name="image_poster_default_height">400dp</dimen>
+    <dimen name="text_movie_name_default_width">300dp</dimen>
+</resources>
