@@ -30,7 +30,7 @@ public class Movie implements Parcelable {
         this.releaseDate = releaseDate;
     }
 
-    public Movie(Parcel in) {
+    private Movie(Parcel in) {
         this.id = in.readInt();
         this.title = in.readString();
         this.language = in.readString();

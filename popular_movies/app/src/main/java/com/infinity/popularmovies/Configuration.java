@@ -3,9 +3,7 @@ package com.infinity.popularmovies;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,9 +15,9 @@ public class Configuration implements Parcelable {
     private String imageBaseUrlSecure = null;
     private List<String> posterImageSizes;
 
-    private static final String HTTP_URL_PATTERN = "^http.*://.+$";
-    private static final String HTTP_URL_BEGIN_PATTERN = "http.*://";
+    public static final String PREFERRED_IMAGE_SIZE = "w185";
 
+    //use this Constructor to get a default configuration before-hand
     public Configuration() {
         final String[] defaultPosterSizes = { "w92", "w154", "w185", "w342", "w500", "w780", "original"};
         setImageBaseUrl("http://image.tmdb.org/t/p/");
@@ -71,11 +69,11 @@ public class Configuration implements Parcelable {
     }
 
     public void setImageBaseUrl(@NonNull String imgBaseUrl) {
-        this.imageBaseUrl = httpTrim(imgBaseUrl);
+        this.imageBaseUrl = imgBaseUrl;
     }
 
     public void setImageBaseUrlSecure(@NonNull String imgBaseUrlSecure) {
-        this.imageBaseUrlSecure = httpTrim(imgBaseUrlSecure);
+        this.imageBaseUrlSecure = imgBaseUrlSecure;
     }
 
     public void setPosterImageSizes(@NonNull List<String> posterImageSizes) {
@@ -87,16 +85,6 @@ public class Configuration implements Parcelable {
                 (imageBaseUrlSecure != null && !imageBaseUrlSecure.isEmpty()) &&
                 (posterImageSizes != null && posterImageSizes.size() > 0));
 
-    }
-
-    private String httpTrim(@NonNull String url) {
-        if (url.matches(HTTP_URL_PATTERN)) {
-            url = url.replaceFirst(HTTP_URL_BEGIN_PATTERN, "");
-            if (url.endsWith("/"))
-                url = url.substring(0, url.length() - 1);
-        }
-
-        return url;
     }
 
     @Override

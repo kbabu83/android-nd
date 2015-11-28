@@ -14,29 +14,52 @@
         tools:context="com.infinity.popularmovies.DetailedViewActivityFragment"
         tools:showIn="@layout/activity_detailed_view">
 
+        <TextView android:id="@+id/txt_movie_plot"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:ellipsize="end" android:textSize="16sp"
+            android:paddingBottom="20dp"/>
+
         <ImageView android:id="@+id/img_poster_view_large"
             android:contentDescription="Large poster display of selected movie"
+            android:layout_below="@id/txt_movie_plot"
             android:layout_width="@dimen/image_poster_default_width"
             android:layout_height="@dimen/image_poster_default_height"
-            android:clickable="false" android:padding="5dp" />
+            android:clickable="false" />
 
-        <TextView android:id="@+id/txt_movie_name_detailed"
+        <!--<TextView android:id="@+id/txt_movie_name_detailed"
             android:layout_below="@id/img_poster_view_large"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:textAlignment="center" android:textSize="24sp"
-            android:layout_centerHorizontal="true" />
+            android:layout_centerHorizontal="true" />-->
 
-        <TextView android:id="@+id/txt_movie_rating"
-            android:layout_toLeftOf="@id/txt_movie_name_detailed" android:layout_below="@id/img_poster_view_large"
-            android:layout_width="@dimen/text_movie_name_default_width"
-            android:layout_height="wrap_content" android:layout_alignBaseline="@id/txt_movie_name_detailed"
-            android:maxLines="7" android:ellipsize="end" android:textSize="14sp"/>
-
-        <TextView android:id="@+id/txt_movie_plot"
-            android:layout_below="@id/txt_movie_name_detailed"
+        <TextView android:id="@+id/txt_movie_rating_title"
             android:layout_width="@dimen/text_movie_name_default_width"
             android:layout_height="wrap_content"
-            android:maxLines="7" android:ellipsize="end" android:textSize="16sp"/>
+            android:text="@string/txt_movie_rating_title"
+            android:textStyle="bold"
+            android:layout_below="@id/txt_movie_plot"
+            android:layout_toRightOf="@id/img_poster_view_large" android:textSize="14sp"/>
+
+        <TextView android:id="@+id/txt_movie_rating"
+            android:layout_width="@dimen/text_movie_name_default_width"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/txt_movie_rating_title"
+            android:layout_toRightOf="@id/img_poster_view_large"
+            android:textSize="14sp"/>
+
+        <TextView android:id="@+id/txt_movie_rel_date"
+            android:layout_width="@dimen/text_movie_name_default_width"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/img_poster_view_large"
+            android:layout_alignBottom="@id/img_poster_view_large" android:textSize="14sp"/>
+
+        <TextView android:id="@+id/txt_movie_rel_date_title"
+            android:layout_width="@dimen/text_movie_name_default_width"
+            android:layout_height="wrap_content"
+            android:text="@string/txt_movie_release_date_title"
+            android:textStyle="bold"
+            android:layout_toRightOf="@id/img_poster_view_large"
+            android:layout_above="@id/txt_movie_rel_date" android:textSize="14sp"/>
 
     </RelativeLayout>
 

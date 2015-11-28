@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -16,7 +15,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,13 +26,11 @@ public class MainActivity extends AppCompatActivity {
             final String action = intent.getAction();
 
             if (MovieDataFetchService.REPLY_FETCH_MOVIE_LIST_UPDATE.equals(action)) {
-                Configuration tmdbConfig = intent.getParcelableExtra("movie_data_config");
-                String baseUrl = tmdbConfig.getImageBaseUrl();
                 movieThumbnailPaths.clear();
 
                 movieList = intent.getParcelableArrayListExtra("movie_list");
                 for (Movie movie : movieList) {
-                    String imageURL = createImageURL(baseUrl, movie.getPosterThumbnail());
+                    String imageURL = movie.getPosterThumbnail();
                     Log.v(logTag, movie.getTitle() + " " +
                              imageURL + " " + movie.getReleaseDate().toString());
                     movieThumbnailPaths.add(imageURL);
@@ -82,25 +78,11 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(view.getContext(), DetailedViewActivity.class);
                 Movie movie = movieList.get(position);
-                intent.putExtra("movie_name", movie.getTitle());
-                intent.putExtra("movie_poster", createImageURL("image.tmdb.org/t/p/", movie.getPosterThumbnail()));
-                intent.putExtra("movie_plot", movie.getSynopsis());
-                intent.putExtra("movie_rating", movie.getRating());
-                intent.putExtra("movie_release", new SimpleDateFormat("dd-MM-yyyy").format(movie.getReleaseDate()));
+                intent.putExtra("selected_movie", movie);
                 startActivity(intent);
             }
         });
 
-/*
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-*/
     }
 
     @Override
@@ -140,12 +122,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    private String createImageURL(@NonNull String basepath, @NonNull String imgpath) {
-        /*Uri.Builder builder = new Uri.Builder();
-        return builder.scheme("http").authority(basepath).appendPath(imgpath).build().toString();*/
-        return "http://" + basepath + "/w500" + imgpath;
     }
 
 }

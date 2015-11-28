@@ -22,9 +22,6 @@
         </activity>
 
         <service
-            android:name=".MovieFetchService"
-            android:exported="false" />
-        <service
             android:name=".MovieDataFetchService"
             android:enabled="true"
             android:exported="false" />

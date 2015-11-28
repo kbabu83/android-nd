@@ -222,7 +222,10 @@ public class MovieDataFetchService extends Service {
             int id = result.getInt("id");
             String title = result.getString("original_title");
             String language = result.getString("original_language");
+
             String thumbnails = result.getString("poster_path");
+            String thumbnailsLink =  getTmdbConfig().getImageBaseUrl() + Configuration.PREFERRED_IMAGE_SIZE + thumbnails;
+
             String plot = result.getString("overview");
             double rating = result.getDouble("vote_average");
             String date = result.getString("release_date");
@@ -235,7 +238,7 @@ public class MovieDataFetchService extends Service {
                 Log.e(logTag, e.getMessage());
             }
 
-            Movie movie = new Movie(id, title, language, thumbnails, plot, rating, releaseDate);
+            Movie movie = new Movie(id, title, language, thumbnailsLink, plot, rating, releaseDate);
             movies.add(movie);
 
         }
