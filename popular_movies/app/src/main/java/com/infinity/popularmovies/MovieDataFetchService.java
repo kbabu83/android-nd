@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.IBinder;
 import android.os.Parcelable;
+import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.support.annotation.NonNull;
@@ -41,9 +42,9 @@ public class MovieDataFetchService extends Service {
 
     public static final String REPLY_FETCH_MOVIE_LIST_UPDATE = "com.infinity.popularmovies.action.REPLY_FETCH_MOVIE_LIST_UPDATE";
 
-    // TODO: Rename parameters
-    public static final String EXTRA_PARAM1 = "com.infinity.popularmovies.extra.PARAM1";
-    public static final String EXTRA_PARAM2 = "com.infinity.popularmovies.extra.PARAM2";
+    public static final String ACTION_PARAM_FETCH_MOVIES_SORT_ORDER = "com.infinity.popularmovies.extra.SortOrder";
+    public static final String ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY = "com.infinity.popularmovies.arg.Popularity";
+    public static final String ACTION_PARAM_FETCH_MOVIES_SORT_USER_RATING = "com.infinity.popularmovies.arg.UserRating";
 
     private Configuration tmdbConfig;
     private RequestQueue cmdRequestQueue = null;
@@ -73,8 +74,12 @@ public class MovieDataFetchService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
             final String action = intent.getAction();
+            String sort_order =
+            (ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY.equals(intent.getStringExtra(ACTION_PARAM_FETCH_MOVIES_SORT_ORDER))) ?
+                    "popularity.desc" : "vote_average.desc";
+
             if (ACTION_FETCH_MOVIE_LIST.equals(action)) {
-                handleActionFetchMovies(createMovieDiscoveryURL());
+                handleActionFetchMovies(createMovieDiscoveryURL(sort_order));
             }
             else if (ACTION_FETCH_MOVIE_DETAILS.equals(action)) {
 
@@ -94,16 +99,16 @@ public class MovieDataFetchService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    @Override
-    public void onDestroy() {
-        Log.v(logTag, "onDestroy()");
-        super.onDestroy();
-    }
+    public static void sendActionRequest(Context context, @NonNull String action, @Nullable String sortOrderArg) {
+        String sortOrder;
+        if (sortOrderArg == null || sortOrderArg.isEmpty())
+            sortOrder = ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY;
+        else
+            sortOrder = sortOrderArg;
 
-    public static void sendActionRequest(Context context, @NonNull String action) {
         Intent intent = new Intent(context, MovieDataFetchService.class);
         intent.setAction(action);
-
+        intent.putExtra(ACTION_PARAM_FETCH_MOVIES_SORT_ORDER, sortOrder);
         context.startService(intent);
     }
 
@@ -120,7 +125,7 @@ public class MovieDataFetchService extends Service {
         return configUrl;
     }
 
-    private String createMovieDiscoveryURL() {
+    private String createMovieDiscoveryURL(String sort_order) {
         Uri.Builder builder = new Uri.Builder();
         builder.scheme("http").authority(TMDB_BASE_URL)
                 .path(TMDB_API_VERSION)
@@ -129,7 +134,7 @@ public class MovieDataFetchService extends Service {
 /*              .appendQueryParameter("primary_release_date.gte", "2015-10-01")
                 .appendQueryParameter("primary_release_date.lte", "2015-10-22")*/
                 .appendQueryParameter("api_key", APIKey.TMDB_API_KEY)
-                .appendQueryParameter("sort_by", "popularity.desc");
+                .appendQueryParameter("sort_by", sort_order);
 
         String discUrl = builder.build().toString();
         Log.v(this.getClass().getSimpleName(), "Discovery URL: " + discUrl);
@@ -169,7 +174,6 @@ public class MovieDataFetchService extends Service {
     }
 
     private void createTMDBConfig() {
-        Log.v(logTag, "createTMDBConfig()");
         JsonObjectRequest jsonRequest = new JsonObjectRequest
         (
             Request.Method.GET, createConfigurationURL(), "",
@@ -177,7 +181,7 @@ public class MovieDataFetchService extends Service {
                 @Override
                 public void onResponse(JSONObject response) {
                     if (response == null) {
-                        Log.e("MovieFetchService", "Null response to config request");
+                        Log.e("MovieDataFetchService", "Null response to config request");
                         return;
                     }
 
@@ -193,7 +197,7 @@ public class MovieDataFetchService extends Service {
 
                         tmdbConfig = new Configuration(imageUrl, imageUrlSecure, posterSizes);
                     } catch (JSONException e) {
-                        Log.e("MovieFetchService", e.getMessage());
+                        Log.e("MovieDataFetchService", e.getMessage());
                     }
                     //Log.v("Service::Response", response.toString());
                 }

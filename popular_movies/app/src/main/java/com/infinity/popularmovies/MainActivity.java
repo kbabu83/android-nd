@@ -1,105 +1,28 @@
 package com.infinity.popularmovies;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.GridView;
+import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private String logTag = getClass().getSimpleName();
-    private BroadcastReceiver receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
 
-            if (MovieDataFetchService.REPLY_FETCH_MOVIE_LIST_UPDATE.equals(action)) {
-                movieThumbnailPaths.clear();
+    private String movieSortOrder = MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY;
 
-                movieList = intent.getParcelableArrayListExtra("movie_list");
-                for (Movie movie : movieList) {
-                    String imageURL = movie.getPosterThumbnail();
-                    Log.v(logTag, movie.getTitle() + " " +
-                             imageURL + " " + movie.getReleaseDate().toString());
-                    movieThumbnailPaths.add(imageURL);
-                }
-
-                imageAdapter.updateImageDataSet(movieThumbnailPaths);
-                imageAdapter.notifyDataSetChanged();
-            }
-        }
-    };
-
-    private List<Movie> movieList = null;
-    private List<String> movieThumbnailPaths = new ArrayList<>();
-
-    private IntentFilter intentFilter = new IntentFilter();
-    private ImageAdapter imageAdapter = new ImageAdapter(this);
+    public String getMovieSortOrder() {
+        return movieSortOrder;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.v(logTag, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        android.content.res.Configuration configuration = this.getResources().getConfiguration();
-        int screenWidthDp = configuration.screenWidthDp; //The current width of the available screen space, in dp units, corresponding to screen width resource qualifier.
-        int smallestScreenWidthDp = configuration.smallestScreenWidthDp; //The smallest screen size an application will see in normal operation, corresponding to smallest screen width resource qualifier.
-        int screenHeightDp = configuration.screenHeightDp;
-
-        Log.v(logTag, "Screen config: " + screenWidthDp + " " + screenHeightDp + " " + smallestScreenWidthDp);
-
-        intentFilter.addAction(MovieDataFetchService.REPLY_FETCH_MOVIE_LIST_UPDATE);
-
-        GridView gridView = (GridView)findViewById(R.id.grid_view);
-        if (gridView == null) {
-            Log.v(getClass().getSimpleName(), "No GridView to populate");
-            return;
-        }
-
-        imageAdapter.notifyDataSetChanged();
-        gridView.setAdapter(imageAdapter);
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(view.getContext(), DetailedViewActivity.class);
-                Movie movie = movieList.get(position);
-                intent.putExtra("selected_movie", movie);
-                startActivity(intent);
-            }
-        });
-
-    }
-
-    @Override
-    protected void onStart() {
-        Log.v(logTag, "onStart()");
-        super.onStart();
-        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(receiver,
-                new IntentFilter(MovieDataFetchService.REPLY_FETCH_MOVIE_LIST_UPDATE));
-
-        MovieDataFetchService.sendActionRequest(this, MovieDataFetchService.ACTION_FETCH_MOVIE_LIST);
-    }
-
-    @Override
-    protected void onStop() {
-        Log.v(logTag, "onStop()");
-        super.onStop();
-        LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(receiver);
     }
 
     @Override
@@ -107,6 +30,18 @@ public class MainActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        boolean ret = super.onPrepareOptionsMenu(menu);
+        MenuItem sortSetting = menu.findItem(R.id.action_sort_order);
+        if (MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY.equals(movieSortOrder))
+            sortSetting.setTitle(getString(R.string.action_sort_by_rating));
+        else
+            sortSetting.setTitle(getString(R.string.action_sort_by_popularity));
+
+        return ret;
     }
 
     @Override
@@ -118,7 +53,18 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Toast.makeText(this, "Settings screen yet to be implemented", Toast.LENGTH_SHORT).show();
             return true;
+        }
+        else if (id == R.id.action_sort_order) {
+            if (MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY.equals(movieSortOrder))
+                movieSortOrder = MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_USER_RATING;
+            else
+                movieSortOrder = MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY;
+
+            MovieDataFetchService.sendActionRequest(this, MovieDataFetchService.ACTION_FETCH_MOVIE_LIST,
+                    movieSortOrder);
+
         }
 
         return super.onOptionsItemSelected(item);

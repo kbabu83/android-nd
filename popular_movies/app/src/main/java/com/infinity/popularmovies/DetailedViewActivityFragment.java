@@ -44,13 +44,6 @@ public class DetailedViewActivityFragment extends Fragment {
             Picasso.with(getActivity()).load(moviePosterUrl).into(imageView);
         }
 
-/*
-        TextView textView = (TextView) rootView.findViewById(R.id.txt_movie_name_detailed);
-        if (textView != null) {
-            textView.setText(movieName);
-        }
-*/
-
         TextView ratingText = (TextView) rootView.findViewById(R.id.txt_movie_rating);
         if (ratingText != null) {
             ratingText.setText(movieRating +"/10");
