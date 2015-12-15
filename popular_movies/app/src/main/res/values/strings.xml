@@ -7,5 +7,8 @@
     <string name="txt_movie_rating_title">Rating:</string>
     <string name="txt_movie_release_date_title">Release Date:</string>
 
+    <string name="preferences_file_key">com.infinity.popularmovies.PREFERENCE_FILE_KEY</string>
+    <string name="preferences_movie_sort_order">com.infinity.popularmovies.MOVIE_SORT_ORDER</string>
+
     <integer name="main_grid_span_count">3</integer>
 </resources>

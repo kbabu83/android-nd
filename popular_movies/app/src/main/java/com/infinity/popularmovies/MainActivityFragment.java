@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -26,10 +27,10 @@ public class MainActivityFragment extends Fragment {
 
     private final String LOG_TAG = getClass().getSimpleName();
 
-    private String movieSortOrder = MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY;
     private List<Movie> movieList = new ArrayList<>();
     private RecyclerView.Adapter imageAdapter = null;
     private IntentFilter intentFilter = new IntentFilter();
+    private SharedPreferences sharedPref = null;
     private int currentPage = 0;
 
     private BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -55,6 +56,16 @@ public class MainActivityFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        String movieSortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), "");
+        if (movieSortOrder.equals("")) {
+            Log.v(LOG_TAG, "No preferences; creating defaults");
+            movieSortOrder = MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY;
+            sharedPref.edit().putString(getString(R.string.preferences_movie_sort_order),
+                    movieSortOrder).commit();
+        }
+        else
+            Log.v(LOG_TAG, "Existing shared pref: " + movieSortOrder);
     }
 
     @Override
@@ -88,6 +99,7 @@ public class MainActivityFragment extends Fragment {
                 Log.v(LOG_TAG, "Visible positions: " + firstVisible + ", " + lastVisible + ", " + itemCount);
 
                 if (lastVisible >= (itemCount - threshold)) {
+                    String movieSortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), null);
                     MovieDataFetchService.sendActionRequest(getActivity(), MovieDataFetchService.ACTION_FETCH_MOVIE_LIST,
                             movieSortOrder, ++currentPage);
                 }
@@ -108,6 +120,7 @@ public class MainActivityFragment extends Fragment {
     public void onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
         MenuItem sortSetting = menu.findItem(R.id.action_sort_order);
+        String movieSortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), null);
         if (MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY.equals(movieSortOrder))
             sortSetting.setTitle(getString(R.string.action_sort_by_rating));
         else
@@ -128,13 +141,15 @@ public class MainActivityFragment extends Fragment {
             return true;
         }
         else if (id == R.id.action_sort_order) {
+            String movieSortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), null);
             if (MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY.equals(movieSortOrder))
                 movieSortOrder = MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_USER_RATING;
             else
                 movieSortOrder = MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY;
+
+            sharedPref.edit().putString(getString(R.string.preferences_movie_sort_order), movieSortOrder).commit();
             currentPage = 1;
             movieList.clear();
-
 
             MovieDataFetchService.sendActionRequest(getActivity(), MovieDataFetchService.ACTION_FETCH_MOVIE_LIST,
                     movieSortOrder, currentPage);
@@ -151,7 +166,7 @@ public class MainActivityFragment extends Fragment {
                 receiver, intentFilter);
 
         MovieDataFetchService.sendActionRequest(this.getActivity(), MovieDataFetchService.ACTION_FETCH_MOVIE_LIST,
-                movieSortOrder, ++currentPage);
+                sharedPref.getString(getString(R.string.preferences_movie_sort_order), null), ++currentPage);
     }
 
     @Override
