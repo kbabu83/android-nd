@@ -58,7 +58,6 @@ public class MainActivityFragment extends Fragment {
         LocalBroadcastManager.getInstance(getActivity().getApplicationContext()).registerReceiver(
                 receiver, intentFilter);
 
-        Log.v(logTag, getActivity().getIntent().getAction() + "; " + getActivity().getIntent().getStringExtra("back_key"));
         MainActivity parent = (MainActivity)getActivity();
         MovieDataFetchService.sendActionRequest(this.getActivity(), MovieDataFetchService.ACTION_FETCH_MOVIE_LIST,
                 parent.getMovieSortOrder());
