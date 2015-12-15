@@ -10,6 +10,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.support.annotation.NonNull;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -42,6 +43,7 @@ public class MovieDataFetchService extends Service {
 
     public static final String REPLY_FETCH_MOVIE_LIST_UPDATE = "com.infinity.popularmovies.action.REPLY_FETCH_MOVIE_LIST_UPDATE";
 
+    public static final String ACTION_PARAM_FETCH_MOVIES_PAGE_NUM = "com.infinity.popularmovies.extra.PageNum";
     public static final String ACTION_PARAM_FETCH_MOVIES_SORT_ORDER = "com.infinity.popularmovies.extra.SortOrder";
     public static final String ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY = "com.infinity.popularmovies.arg.Popularity";
     public static final String ACTION_PARAM_FETCH_MOVIES_SORT_USER_RATING = "com.infinity.popularmovies.arg.UserRating";
@@ -77,9 +79,10 @@ public class MovieDataFetchService extends Service {
             String sort_order =
             (ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY.equals(intent.getStringExtra(ACTION_PARAM_FETCH_MOVIES_SORT_ORDER))) ?
                     "popularity.desc" : "vote_average.desc";
+            int page = intent.getIntExtra(ACTION_PARAM_FETCH_MOVIES_PAGE_NUM, 1);
 
             if (ACTION_FETCH_MOVIE_LIST.equals(action)) {
-                handleActionFetchMovies(createMovieDiscoveryURL(sort_order));
+                handleActionFetchMovies(createMovieDiscoveryURL(sort_order, page));
             }
             else if (ACTION_FETCH_MOVIE_DETAILS.equals(action)) {
 
@@ -99,7 +102,7 @@ public class MovieDataFetchService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    public static void sendActionRequest(Context context, @NonNull String action, @Nullable String sortOrderArg) {
+    public static void sendActionRequest(Context context, @NonNull String action, @Nullable String sortOrderArg, int pageNum) {
         String sortOrder;
         if (sortOrderArg == null || sortOrderArg.isEmpty())
             sortOrder = ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY;
@@ -109,6 +112,7 @@ public class MovieDataFetchService extends Service {
         Intent intent = new Intent(context, MovieDataFetchService.class);
         intent.setAction(action);
         intent.putExtra(ACTION_PARAM_FETCH_MOVIES_SORT_ORDER, sortOrder);
+        intent.putExtra(ACTION_PARAM_FETCH_MOVIES_PAGE_NUM, pageNum);
         context.startService(intent);
     }
 
@@ -125,15 +129,14 @@ public class MovieDataFetchService extends Service {
         return configUrl;
     }
 
-    private String createMovieDiscoveryURL(String sort_order) {
+    private String createMovieDiscoveryURL(String sort_order, int page) {
         Uri.Builder builder = new Uri.Builder();
         builder.scheme("http").authority(TMDB_BASE_URL)
                 .path(TMDB_API_VERSION)
                 .appendPath(TMDB_DISCOVERY_PATH)
                 .appendPath(TMDB_DISCOVER_TYPE_MOVIE)
-/*              .appendQueryParameter("primary_release_date.gte", "2015-10-01")
-                .appendQueryParameter("primary_release_date.lte", "2015-10-22")*/
                 .appendQueryParameter("api_key", APIKey.TMDB_API_KEY)
+                .appendQueryParameter("page", String.valueOf(page))
                 .appendQueryParameter("sort_by", sort_order);
 
         String discUrl = builder.build().toString();
@@ -165,7 +168,10 @@ public class MovieDataFetchService extends Service {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.v("Service::Error", error.getMessage());
+                        if (error.getMessage() != null)
+                            Log.v("Service::Error", error.getMessage());
+
+                        Toast.makeText(MovieDataFetchService.this, "Couldn't connect to network!", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
