@@ -7,8 +7,10 @@ import android.content.IntentFilter;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -23,7 +25,7 @@ public class MainActivityFragment extends Fragment {
 
     private List<Movie> movieList = null;
     private List<String> movieThumbnailPaths = new ArrayList<>();
-    private ImageAdapter imageAdapter = null;
+    private RecyclerView.Adapter imageAdapter = null;
     private IntentFilter intentFilter = new IntentFilter();
 
     private BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -42,7 +44,7 @@ public class MainActivityFragment extends Fragment {
                     movieThumbnailPaths.add(imageURL);
                 }
 
-                imageAdapter.updateImageDataSet(movieThumbnailPaths);
+                ((ImageViewAdapter)imageAdapter).updateImageDataSet(movieThumbnailPaths);
                 imageAdapter.notifyDataSetChanged();
             }
         }
@@ -53,21 +55,30 @@ public class MainActivityFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        GridView gridView = (GridView) rootView.findViewById(R.id.grid_view);
-        if (gridView == null) {
+        RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.list_view_movies);
+        //GridView gridView = (GridView) rootView.findViewById(R.id.grid_view);
+        if (recyclerView == null) {
             Log.v(logTag, "No GridView instance available in Fragment");
             return rootView;
         }
+
         intentFilter.addAction(MovieDataFetchService.REPLY_FETCH_MOVIE_LIST_UPDATE);
-        imageAdapter = new ImageAdapter(getActivity());
-        gridView.setAdapter(imageAdapter);
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        imageAdapter = new ImageViewAdapter(getActivity(), movieThumbnailPaths);
+        recyclerView.setAdapter(imageAdapter);
+        recyclerView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(view.getContext(), DetailedViewActivity.class);
-                Movie movie = movieList.get(position);
-                intent.putExtra("selected_movie", movie);
-                startActivity(intent);
+            public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public void onTouchEvent(RecyclerView rv, MotionEvent e) {
+
+            }
+
+            @Override
+            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+
             }
         });
 
