@@ -6,4 +6,6 @@
     <string name="title_activity_detailed_view">DetailedViewActivity</string>
     <string name="txt_movie_rating_title">Rating:</string>
     <string name="txt_movie_release_date_title">Release Date:</string>
+
+    <integer name="main_grid_span_count">3</integer>
 </resources>

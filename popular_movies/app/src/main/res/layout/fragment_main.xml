@@ -11,20 +11,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layoutManager="android.support.v7.widget.GridLayoutManager"
-        app:spanCount="3" />
-
-    <!--<GridView xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/grid_view"
-        android:layout_width="match_parent" android:layout_height="match_parent"
-        android:paddingLeft="@dimen/image_grid_horizontal_margin"
-        android:paddingRight="@dimen/image_grid_horizontal_margin"
-        android:paddingTop="@dimen/image_grid_vertical_margin"
-        android:paddingBottom="@dimen/image_grid_vertical_margin"
-        android:columnWidth="180dp" android:numColumns="2"
-        android:verticalSpacing="1dp" android:horizontalSpacing="1dp"
-        android:stretchMode="columnWidth"
-        tools:context=".MainActivityFragment" />-->
-
+        app:spanCount="@integer/main_grid_span_count" />
 
 </FrameLayout>

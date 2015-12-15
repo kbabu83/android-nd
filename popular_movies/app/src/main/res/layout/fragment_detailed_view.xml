@@ -26,12 +26,6 @@
             android:layout_height="@dimen/image_poster_default_height"
             android:clickable="false" />
 
-        <!--<TextView android:id="@+id/txt_movie_name_detailed"
-            android:layout_below="@id/img_poster_view_large"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:textAlignment="center" android:textSize="24sp"
-            android:layout_centerHorizontal="true" />-->
-
         <TextView android:id="@+id/txt_movie_rating_title"
             android:layout_width="@dimen/text_movie_name_default_width"
             android:layout_height="wrap_content"
