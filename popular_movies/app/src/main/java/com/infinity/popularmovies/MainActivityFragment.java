@@ -38,6 +38,7 @@ public class MainActivityFragment extends Fragment {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (MovieDataFetchService.REPLY_FETCH_MOVIE_LIST_UPDATE.equals(action)) {
+                ++currentPage;
                 List<? extends Parcelable> movies = intent.getParcelableArrayListExtra("movie_list");
                 if (movies != null) {
                     for (Parcelable p : movies)
@@ -64,8 +65,6 @@ public class MainActivityFragment extends Fragment {
             sharedPref.edit().putString(getString(R.string.preferences_movie_sort_order),
                     movieSortOrder).commit();
         }
-        else
-            Log.v(LOG_TAG, "Existing shared pref: " + movieSortOrder);
     }
 
     @Override
@@ -73,7 +72,7 @@ public class MainActivityFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.list_view_movies);
         if (recyclerView == null) {
-            Log.v(LOG_TAG, "No GridView instance available in Fragment");
+            Log.e(LOG_TAG, "No GridView instance available in Fragment");
             return rootView;
         }
 
@@ -81,6 +80,8 @@ public class MainActivityFragment extends Fragment {
         imageAdapter = new ImageViewAdapter(getActivity(), movieList);
         recyclerView.setAdapter(imageAdapter);
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            private int mScrollPage = currentPage;
+
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
@@ -88,6 +89,8 @@ public class MainActivityFragment extends Fragment {
 
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
                 final int threshold = 2 * getResources().getInteger(R.integer.main_grid_span_count);
                 GridLayoutManager layoutManager = (GridLayoutManager)recyclerView.getLayoutManager();
                 if (layoutManager == null)
@@ -98,10 +101,10 @@ public class MainActivityFragment extends Fragment {
                 int lastVisible = layoutManager.findLastVisibleItemPosition();
                 Log.v(LOG_TAG, "Visible positions: " + firstVisible + ", " + lastVisible + ", " + itemCount);
 
-                if (lastVisible >= (itemCount - threshold)) {
+                if (lastVisible >= (itemCount - threshold) && mScrollPage <= currentPage) {
                     String movieSortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), null);
                     MovieDataFetchService.sendActionRequest(getActivity(), MovieDataFetchService.ACTION_FETCH_MOVIE_LIST,
-                            movieSortOrder, ++currentPage);
+                            movieSortOrder, ++mScrollPage);
                 }
 
             }
@@ -119,12 +122,18 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
-        MenuItem sortSetting = menu.findItem(R.id.action_sort_order);
+
+        MenuItem sortByPopularity = menu.findItem(R.id.action_popularity_sort);
+        MenuItem sortByRating = menu.findItem(R.id.action_rating_sort);
+        MenuItem sortByFavourite = menu.findItem(R.id.action_favourite_sort);
+
         String movieSortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), null);
-        if (MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY.equals(movieSortOrder))
-            sortSetting.setTitle(getString(R.string.action_sort_by_rating));
+        if (MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_USER_FAVOURITE.equals(movieSortOrder))
+            sortByFavourite.setChecked(true);
+        else if (MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_RATING.equals(movieSortOrder))
+            sortByRating.setChecked(true);
         else
-            sortSetting.setTitle(getString(R.string.action_sort_by_popularity));
+            sortByPopularity.setChecked(true);
 
     }
 
@@ -134,29 +143,35 @@ public class MainActivityFragment extends Fragment {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
+        switch (id) {
+            case R.id.action_settings:
+                Toast.makeText(getActivity(), "Settings screen yet to be implemented", Toast.LENGTH_SHORT).show();
+                break;
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            Toast.makeText(getActivity(), "Settings screen yet to be implemented", Toast.LENGTH_SHORT).show();
-            return true;
+            case R.id.action_popularity_sort:
+            case R.id.action_rating_sort:
+                if (!item.isChecked()) {
+                    String movieSortOrder = (id == R.id.action_rating_sort) ?
+                            MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_RATING :
+                            MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY;
+                    sharedPref.edit().putString(getString(R.string.preferences_movie_sort_order), movieSortOrder).commit();
+                    item.setChecked(true);
+                    currentPage = 1;
+                    movieList.clear();
+                    MovieDataFetchService.sendActionRequest(getActivity(), MovieDataFetchService.ACTION_FETCH_MOVIE_LIST,
+                            movieSortOrder, currentPage);
+                }
+                break;
+
+            case R.id.action_favourite_sort:
+                Toast.makeText(getContext(), "Feature not yet implemented", Toast.LENGTH_SHORT).show();
+                break;
+
+            default:
+                return false;
         }
-        else if (id == R.id.action_sort_order) {
-            String movieSortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), null);
-            if (MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY.equals(movieSortOrder))
-                movieSortOrder = MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_USER_RATING;
-            else
-                movieSortOrder = MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY;
 
-            sharedPref.edit().putString(getString(R.string.preferences_movie_sort_order), movieSortOrder).commit();
-            currentPage = 1;
-            movieList.clear();
-
-            MovieDataFetchService.sendActionRequest(getActivity(), MovieDataFetchService.ACTION_FETCH_MOVIE_LIST,
-                    movieSortOrder, currentPage);
-
-        }
-
-        return super.onOptionsItemSelected(item);
+        return true;
     }
 
     @Override

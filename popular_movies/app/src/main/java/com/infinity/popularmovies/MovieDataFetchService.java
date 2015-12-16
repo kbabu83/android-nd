@@ -46,7 +46,9 @@ public class MovieDataFetchService extends Service {
     public static final String ACTION_PARAM_FETCH_MOVIES_PAGE_NUM = "com.infinity.popularmovies.extra.PageNum";
     public static final String ACTION_PARAM_FETCH_MOVIES_SORT_ORDER = "com.infinity.popularmovies.extra.SortOrder";
     public static final String ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY = "com.infinity.popularmovies.arg.Popularity";
-    public static final String ACTION_PARAM_FETCH_MOVIES_SORT_USER_RATING = "com.infinity.popularmovies.arg.UserRating";
+    public static final String ACTION_PARAM_FETCH_MOVIES_SORT_RATING = "com.infinity.popularmovies.arg.Rating";
+    public static final String ACTION_PARAM_FETCH_MOVIES_SORT_USER_FAVOURITE = "com.infinity.popularmovies.arg.UserFavourite";
+
 
     private Configuration tmdbConfig;
     private RequestQueue cmdRequestQueue = null;
@@ -245,7 +247,7 @@ public class MovieDataFetchService extends Service {
             try {
                 releaseDate = df.parse(date);
             } catch (ParseException e) {
-                Log.e(logTag, e.getMessage());
+                Log.e(logTag, "Movie " + title + ": " + e.getMessage());
             }
 
             Movie movie = new Movie(id, title, language, thumbnailsLink, plot, rating, releaseDate);

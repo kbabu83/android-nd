@@ -15,7 +15,7 @@ public class Configuration implements Parcelable {
     private String imageBaseUrlSecure = null;
     private List<String> posterImageSizes;
 
-    public static final String PREFERRED_IMAGE_SIZE = "w185";
+    public static final String PREFERRED_IMAGE_SIZE = "w300";
 
     //use this Constructor to get a default configuration before-hand
     public Configuration() {
