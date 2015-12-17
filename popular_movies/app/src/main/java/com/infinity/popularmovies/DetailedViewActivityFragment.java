@@ -36,6 +36,7 @@ public class DetailedViewActivityFragment extends Fragment {
         String moviePosterUrl = movie.getPosterThumbnail();
         String moviePlot = movie.getSynopsis();
         String movieRating = String.valueOf(movie.getRating());
+        String vote_count = String.valueOf(movie.getVoteCount());
         Date releaseDate = movie.getReleaseDate();
         getActivity().setTitle(movieName + " (" + (releaseDate.getYear() + 1900) + ")");
 
@@ -46,7 +47,7 @@ public class DetailedViewActivityFragment extends Fragment {
 
         TextView ratingText = (TextView) rootView.findViewById(R.id.txt_movie_rating);
         if (ratingText != null) {
-            ratingText.setText(movieRating +"/10");
+            ratingText.setText(movieRating +"/10\t(" + vote_count + " votes)");
         }
 
         TextView plotText = (TextView) rootView.findViewById(R.id.txt_movie_plot);

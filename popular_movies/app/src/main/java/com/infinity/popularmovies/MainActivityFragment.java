@@ -20,6 +20,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.infinity.popularmovies.data.MovieFetchServiceContract;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,16 +39,21 @@ public class MainActivityFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            if (MovieDataFetchService.REPLY_FETCH_MOVIE_LIST_UPDATE.equals(action)) {
-                ++currentPage;
-                List<? extends Parcelable> movies = intent.getParcelableArrayListExtra("movie_list");
-                if (movies != null) {
-                    for (Parcelable p : movies)
-                        movieList.add((Movie)p);
-                }
+            if (MovieFetchServiceContract.REPLY_DISCOVER_MOVIES_UPDATE.equals(action)) {
+                Log.v(LOG_TAG, "Discovery results available");
+                int page = intent.getIntExtra(MovieFetchServiceContract.EXTRA_PAGE_NUM, 1);
+                if (page > currentPage) {
+                    currentPage = page;
+                    List<? extends Parcelable> movies = intent.getParcelableArrayListExtra(
+                            MovieFetchServiceContract.EXTRA_MOVIE_LIST);
+                    if (movies != null) {
+                        for (Parcelable p : movies)
+                            movieList.add((Movie) p);
+                    }
 
-                ((ImageViewAdapter)imageAdapter).updateImageDataSet(movieList);
-                imageAdapter.notifyDataSetChanged();
+                    ((ImageViewAdapter) imageAdapter).updateImageDataSet(movieList);
+                    imageAdapter.notifyDataSetChanged();
+                }
             }
         }
     };
@@ -61,9 +68,8 @@ public class MainActivityFragment extends Fragment {
         String movieSortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), "");
         if (movieSortOrder.equals("")) {
             Log.v(LOG_TAG, "No preferences; creating defaults");
-            movieSortOrder = MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY;
             sharedPref.edit().putString(getString(R.string.preferences_movie_sort_order),
-                    movieSortOrder).commit();
+                    MovieFetchServiceContract.SORT_SETTING_POPULARITY).apply();
         }
     }
 
@@ -76,16 +82,16 @@ public class MainActivityFragment extends Fragment {
             return rootView;
         }
 
-        intentFilter.addAction(MovieDataFetchService.REPLY_FETCH_MOVIE_LIST_UPDATE);
+        intentFilter.addAction(MovieFetchServiceContract.REPLY_DISCOVER_MOVIES_UPDATE);
         imageAdapter = new ImageViewAdapter(getActivity(), movieList);
         recyclerView.setAdapter(imageAdapter);
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             private int mScrollPage = currentPage;
 
-            @Override
+            /*@Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-            }
+            }*/
 
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
@@ -97,16 +103,14 @@ public class MainActivityFragment extends Fragment {
                     return;
 
                 int itemCount = layoutManager.getItemCount();
-                int firstVisible = layoutManager.findFirstVisibleItemPosition();
+                //int firstVisible = layoutManager.findFirstVisibleItemPosition();
                 int lastVisible = layoutManager.findLastVisibleItemPosition();
-                Log.v(LOG_TAG, "Visible positions: " + firstVisible + ", " + lastVisible + ", " + itemCount);
+                //Log.v(LOG_TAG, "Visible positions: " + firstVisible + ", " + lastVisible + ", " + itemCount);
 
                 if (lastVisible >= (itemCount - threshold) && mScrollPage <= currentPage) {
-                    String movieSortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), null);
-                    MovieDataFetchService.sendActionRequest(getActivity(), MovieDataFetchService.ACTION_FETCH_MOVIE_LIST,
-                            movieSortOrder, ++mScrollPage);
+                    startMovieDiscovery(mScrollPage);
+                    ++mScrollPage;
                 }
-
             }
         });
 
@@ -123,17 +127,13 @@ public class MainActivityFragment extends Fragment {
     public void onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
 
-        MenuItem sortByPopularity = menu.findItem(R.id.action_popularity_sort);
-        MenuItem sortByRating = menu.findItem(R.id.action_rating_sort);
-        MenuItem sortByFavourite = menu.findItem(R.id.action_favourite_sort);
-
         String movieSortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), null);
-        if (MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_USER_FAVOURITE.equals(movieSortOrder))
-            sortByFavourite.setChecked(true);
-        else if (MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_RATING.equals(movieSortOrder))
-            sortByRating.setChecked(true);
+        if (MovieFetchServiceContract.SORT_SETTING_FAVOURITE.equals(movieSortOrder))
+            menu.findItem(R.id.action_favourite_sort).setChecked(true);
+        else if (MovieFetchServiceContract.SORT_SETTING_RATING.equals(movieSortOrder))
+            menu.findItem(R.id.action_rating_sort).setChecked(true);
         else
-            sortByPopularity.setChecked(true);
+            menu.findItem(R.id.action_popularity_sort).setChecked(true);
 
     }
 
@@ -152,19 +152,18 @@ public class MainActivityFragment extends Fragment {
             case R.id.action_rating_sort:
                 if (!item.isChecked()) {
                     String movieSortOrder = (id == R.id.action_rating_sort) ?
-                            MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_RATING :
-                            MovieDataFetchService.ACTION_PARAM_FETCH_MOVIES_SORT_POPULARITY;
-                    sharedPref.edit().putString(getString(R.string.preferences_movie_sort_order), movieSortOrder).commit();
+                            MovieFetchServiceContract.SORT_SETTING_RATING :
+                            MovieFetchServiceContract.SORT_SETTING_POPULARITY;
+                    sharedPref.edit().putString(getString(R.string.preferences_movie_sort_order), movieSortOrder).apply();
                     item.setChecked(true);
-                    currentPage = 1;
+                    currentPage = 0;
                     movieList.clear();
-                    MovieDataFetchService.sendActionRequest(getActivity(), MovieDataFetchService.ACTION_FETCH_MOVIE_LIST,
-                            movieSortOrder, currentPage);
+                    startMovieDiscovery(0);
                 }
                 break;
 
             case R.id.action_favourite_sort:
-                Toast.makeText(getContext(), "Feature not yet implemented", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Feature not yet available", Toast.LENGTH_SHORT).show();
                 break;
 
             default:
@@ -180,8 +179,7 @@ public class MainActivityFragment extends Fragment {
         LocalBroadcastManager.getInstance(getActivity().getApplicationContext()).registerReceiver(
                 receiver, intentFilter);
 
-        MovieDataFetchService.sendActionRequest(this.getActivity(), MovieDataFetchService.ACTION_FETCH_MOVIE_LIST,
-                sharedPref.getString(getString(R.string.preferences_movie_sort_order), null), ++currentPage);
+        startMovieDiscovery(currentPage);
     }
 
     @Override
@@ -191,6 +189,15 @@ public class MainActivityFragment extends Fragment {
             movieList.clear();
         currentPage = 0;
         LocalBroadcastManager.getInstance(this.getActivity().getApplicationContext()).unregisterReceiver(receiver);
+    }
+
+    /**
+     * Helper function to trigger Movie discovery request to IntentService
+     * @param currentpage The current page shown on screen if content is already shown; else 0.
+     */
+    private void startMovieDiscovery(int currentpage) {
+        String sortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), null);
+        MovieDataFetchHelperService.startActionDiscover(getActivity(), ++currentpage, sortOrder);
     }
 
 }

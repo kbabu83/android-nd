@@ -4,21 +4,52 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
+import com.infinity.popularmovies.data.Review;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by KBabu on 24-Nov-15.
  */
 public class Movie implements Parcelable {
     private int id;
+    private int page;
     private String title;
     private String language;
     private String posterThumbnail;
     private String synopsis;
     private double rating;
+    private int voteCount;
     private Date releaseDate;
+    private List<String> trailers = new ArrayList<>();
+    private List<Review> reviews = new ArrayList<>();
+
+    public Movie(int id, int page, String title, String language, String posterThumbnail, String synopsis,
+                 double rating, int voteCount, Date releaseDate, List<String> trailers,
+                 List<Review> reviews) {
+        this.id = id;
+        this.title = title;
+        this.language = language;
+        this.posterThumbnail = posterThumbnail;
+        this.synopsis = synopsis;
+        this.rating = rating;
+        this.voteCount = voteCount;
+        this.releaseDate = releaseDate;
+        this.page = page;
+        if (trailers != null)
+            this.trailers = trailers;
+        else
+            this.trailers = new ArrayList<>();
+
+        if (reviews != null)
+            this.reviews = reviews;
+        else
+            this.reviews = new ArrayList<>();
+    }
 
     public Movie(int id, String title, String language, String posterThumbnail, String synopsis, double rating, Date releaseDate) {
         this.id = id;
@@ -37,11 +68,15 @@ public class Movie implements Parcelable {
         this.posterThumbnail = in.readString();
         this.synopsis = in.readString();
         this.rating = in.readDouble();
+        this.voteCount = in.readInt();
         try {
             this.releaseDate = new SimpleDateFormat("yyyy-MM-dd").parse(in.readString());
         } catch (ParseException e) {
             Log.e("Movie", "Date parse failed: " + e.getMessage());
         }
+        this.page = in.readInt();
+        in.readStringList(this.trailers);
+        in.readTypedList(this.reviews, Review.CREATOR);
     }
 
     public static final Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {
@@ -56,6 +91,27 @@ public class Movie implements Parcelable {
             return new Movie[size];
         }
     };
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(getId());
+        dest.writeString(getTitle());
+        dest.writeString(getLanguage());
+        dest.writeString(getPosterThumbnail());
+        dest.writeString(getSynopsis());
+        dest.writeDouble(getRating());
+        dest.writeInt(getVoteCount());
+        dest.writeString(new SimpleDateFormat("yyyy-MM-dd").format(getReleaseDate()));
+        dest.writeInt(getPage());
+        dest.writeStringList(getTrailers());
+        dest.writeTypedList(getReviews());
+
+    }
 
     public int getId() {
         return id;
@@ -113,21 +169,36 @@ public class Movie implements Parcelable {
         this.releaseDate = releaseDate;
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
+    public int getVoteCount() {
+        return voteCount;
     }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(getId());
-        dest.writeString(getTitle());
-        dest.writeString(getLanguage());
-        dest.writeString(getPosterThumbnail());
-        dest.writeString(getSynopsis());
-        dest.writeDouble(getRating());
-        dest.writeString(new SimpleDateFormat("yyyy-MM-dd").format(getReleaseDate()));
+    public void setVoteCount(int voteCount) {
+        this.voteCount = voteCount;
+    }
 
+    public int getPage() {
+        return page;
+    }
+
+    public void setPage(int page) {
+        this.page = page;
+    }
+
+    public List<String> getTrailers() {
+        return trailers;
+    }
+
+    public void setTrailers(List<String> trailers) {
+        this.trailers = trailers;
+    }
+
+    public List<Review> getReviews() {
+        return reviews;
+    }
+
+    public void setReviews(List<Review> reviews) {
+        this.reviews = reviews;
     }
 
 }
