@@ -16,11 +16,15 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.infinity.popularmovies.data.MovieFetchServiceContract;
+import com.infinity.popularmovies.netapi.APIKey;
+import com.infinity.popularmovies.netapi.MovieResponse;
+import com.infinity.popularmovies.netapi.TmdbService;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -29,12 +33,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import retrofit.Call;
+import retrofit.Retrofit;
+//import retrofit.Response;
+import retrofit.GsonConverterFactory;
+
+
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
- * <p/>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
  */
 public class MovieDataFetchHelperService extends IntentService {
     //Logging aid; log tag for all logs from this class
@@ -42,7 +49,7 @@ public class MovieDataFetchHelperService extends IntentService {
 
     //TMDB Discovery/Search API constants
     private static final String TMDB_BASE_URL = "api.themoviedb.org";
-    private static final String TMDB_API_VERSION = "3";
+    private static final int TMDB_API_VERSION = 3;
     private static final String TMDB_CONFIGURATION_PATH="configuration";
     private static final String TMDB_DISCOVERY_PATH = "discover";
     private static final String TMDB_DISCOVER_TYPE_MOVIE = "movie";
@@ -53,12 +60,6 @@ public class MovieDataFetchHelperService extends IntentService {
     //TMDB Discovery - Sort options
     private static final String TMDB_QUERY_SORT_VOTE_DESC = "vote_average.desc";
     private static final String TMDB_QUERY_SORT_POPULARITY_DESC = "popularity.desc";
-
-
-
-
-
-    // TODO: Rename parameters
 
     private Configuration tmdbConfig;
     private RequestQueue requestQueue = null;
@@ -191,8 +192,21 @@ public class MovieDataFetchHelperService extends IntentService {
      * parameters.
      */
     private void handleActionFetchMovie(int movieId) {
-        // TODO: Handle action Baz
-        throw new UnsupportedOperationException("Not yet implemented");
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://"+TMDB_BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        TmdbService service = retrofit.create(TmdbService.class);
+        Call<MovieResponse> movieResultCall = service.fetchMovieDetails(TMDB_API_VERSION, movieId, APIKey.TMDB_API_KEY);
+        try {
+            retrofit.Response<MovieResponse> response = movieResultCall.execute();
+            MovieResponse movie = response.body();
+            Log.v(LOG_TAG, movie.getTitle() + ": " + movie.getRuntime() + " mins");
+
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "Network request failure");
+        }
+
     }
 
     /**
@@ -241,14 +255,15 @@ public class MovieDataFetchHelperService extends IntentService {
 
     /**
      *
-     * @param api_key
-     * @return
+     * @param apiKey TMDB API key
+     * @return A URL that can be used to get the TMDB configuration (image base paths etc.)
      */
-    private String buildTMDBConfigURL(@NonNull String api_key) {
+    private String buildTMDBConfigURL(@NonNull String apiKey) {
         Uri.Builder builder = new Uri.Builder();
-        Uri uri = builder.scheme("http").authority(TMDB_BASE_URL).path(TMDB_API_VERSION)
+        Uri uri = builder.scheme("http").authority(TMDB_BASE_URL)
+                         .path(String.valueOf(TMDB_API_VERSION))
                          .appendPath(TMDB_CONFIGURATION_PATH)
-                         .appendQueryParameter(TMDB_QUERY_PARAM_API_KEY, api_key)
+                         .appendQueryParameter(TMDB_QUERY_PARAM_API_KEY, apiKey)
                          .build();
 
         return uri.toString();
@@ -256,17 +271,18 @@ public class MovieDataFetchHelperService extends IntentService {
 
     /**
      * Build the URL to invoke the TMDB movie discovery API
-     * @param page
-     * @param sortBy
-     * @param api_key
-     * @return url
+     * @param page Page number to query for; the TMDB API returns at most 20 items/page as a result
+     * @param sortBy Sort order (popularity/rating)
+     * @param apiKey TMDB API key
+     * @return A URL that can be used to invoke the movie discovery API
      */
-    private String buildMovieDiscoveryURL(int page, @NonNull String sortBy, @NonNull String api_key) {
+    private String buildMovieDiscoveryURL(int page, @NonNull String sortBy, @NonNull String apiKey) {
         Uri.Builder builder = new Uri.Builder();
-        builder = builder.scheme("http").authority(TMDB_BASE_URL).path(TMDB_API_VERSION)
+        builder = builder.scheme("http").authority(TMDB_BASE_URL)
+                         .path(String.valueOf(TMDB_API_VERSION))
                          .appendPath(TMDB_DISCOVERY_PATH)
                          .appendPath(TMDB_DISCOVER_TYPE_MOVIE)
-                         .appendQueryParameter(TMDB_QUERY_PARAM_API_KEY, api_key)
+                         .appendQueryParameter(TMDB_QUERY_PARAM_API_KEY, apiKey)
                          .appendQueryParameter(TMDB_QUERY_PARAM_SORT_ORDER, sortBy)
                          .appendQueryParameter(TMDB_QUERY_PARAM_PAGE_NUM, String.valueOf(page));
 
@@ -279,8 +295,9 @@ public class MovieDataFetchHelperService extends IntentService {
 
     /**
      *
-     * @param movieData
-     * @return
+     * @param movieData JSON response from TMDB API
+     * @return An std::pair like Object with page number as Key and list of movies in the page as
+     *         Value
      * @throws JSONException
      */
     private Map.Entry<Integer, List<Movie>> getMoviesList(@NonNull JSONObject movieData) throws JSONException {
@@ -317,7 +334,7 @@ public class MovieDataFetchHelperService extends IntentService {
 
             //trailers and reviews require further API calls; these will be retrieved if the user
             //wishes to see more details in the Details Activity
-            Movie movie = new Movie(id, page, title, language, thumbnails, plot, rating,
+            Movie movie = new Movie(id, title, language, thumbnails, plot, rating,
                     vote_count, releaseDate, null, null);
             movies.add(movie);
 

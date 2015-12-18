@@ -67,7 +67,6 @@ public class ImageViewAdapter extends RecyclerView.Adapter<ImageViewAdapter.View
     public void onBindViewHolder(ViewHolder holder, int position) {
         holder.position = position;
         String thumbnail = dataset.get(position).getPosterThumbnail();
-        Log.v(LOG_TAG, thumbnail);
         Picasso.with(context).load(thumbnail).placeholder(R.drawable.no_preview_available).into((ImageView) holder.itemView);
     }
 

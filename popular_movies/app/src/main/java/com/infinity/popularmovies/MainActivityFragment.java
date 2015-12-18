@@ -88,10 +88,10 @@ public class MainActivityFragment extends Fragment {
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             private int mScrollPage = currentPage;
 
-            /*@Override
+            @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-            }*/
+            }
 
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {

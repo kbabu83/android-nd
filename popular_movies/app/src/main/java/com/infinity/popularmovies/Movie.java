@@ -13,11 +13,11 @@ import java.util.Date;
 import java.util.List;
 
 /**
+ * Class to hold details of movies
  * Created by KBabu on 24-Nov-15.
  */
 public class Movie implements Parcelable {
     private int id;
-    private int page;
     private String title;
     private String language;
     private String posterThumbnail;
@@ -28,7 +28,7 @@ public class Movie implements Parcelable {
     private List<String> trailers = new ArrayList<>();
     private List<Review> reviews = new ArrayList<>();
 
-    public Movie(int id, int page, String title, String language, String posterThumbnail, String synopsis,
+    public Movie(int id, String title, String language, String posterThumbnail, String synopsis,
                  double rating, int voteCount, Date releaseDate, List<String> trailers,
                  List<Review> reviews) {
         this.id = id;
@@ -39,7 +39,6 @@ public class Movie implements Parcelable {
         this.rating = rating;
         this.voteCount = voteCount;
         this.releaseDate = releaseDate;
-        this.page = page;
         if (trailers != null)
             this.trailers = trailers;
         else
@@ -74,7 +73,6 @@ public class Movie implements Parcelable {
         } catch (ParseException e) {
             Log.e("Movie", "Date parse failed: " + e.getMessage());
         }
-        this.page = in.readInt();
         in.readStringList(this.trailers);
         in.readTypedList(this.reviews, Review.CREATOR);
     }
@@ -107,7 +105,6 @@ public class Movie implements Parcelable {
         dest.writeDouble(getRating());
         dest.writeInt(getVoteCount());
         dest.writeString(new SimpleDateFormat("yyyy-MM-dd").format(getReleaseDate()));
-        dest.writeInt(getPage());
         dest.writeStringList(getTrailers());
         dest.writeTypedList(getReviews());
 
@@ -175,14 +172,6 @@ public class Movie implements Parcelable {
 
     public void setVoteCount(int voteCount) {
         this.voteCount = voteCount;
-    }
-
-    public int getPage() {
-        return page;
-    }
-
-    public void setPage(int page) {
-        this.page = page;
     }
 
     public List<String> getTrailers() {

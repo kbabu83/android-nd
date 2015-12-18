@@ -8,6 +8,7 @@
     <string name="title_activity_detailed_view">DetailedViewActivity</string>
     <string name="txt_movie_rating_title">Rating:</string>
     <string name="txt_movie_release_date_title">Release Date:</string>
+    <string name="txt_movie_duration_title">Duration:</string>
 
     <string name="preferences_file_key" translatable="false">com.infinity.popularmovies.PREFERENCE_FILE_KEY</string>
     <string name="preferences_movie_sort_order" translatable="false">com.infinity.popularmovies.MOVIE_SORT_ORDER</string>
