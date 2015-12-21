@@ -5,37 +5,29 @@ import android.content.Intent;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Parcelable;
-import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.infinity.popularmovies.data.MovieFetchServiceContract;
+import com.infinity.popularmovies.data.Review;
+import com.infinity.popularmovies.data.Video;
 import com.infinity.popularmovies.netapi.APIKey;
+import com.infinity.popularmovies.netapi.ConfigResponse;
 import com.infinity.popularmovies.netapi.MovieResponse;
+import com.infinity.popularmovies.netapi.ReviewResponse;
+import com.infinity.popularmovies.netapi.TmdbResponse;
 import com.infinity.popularmovies.netapi.TmdbService;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.infinity.popularmovies.netapi.VideoResponse;
 
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import retrofit.Call;
 import retrofit.Retrofit;
-//import retrofit.Response;
 import retrofit.GsonConverterFactory;
 
 
@@ -48,21 +40,20 @@ public class MovieDataFetchHelperService extends IntentService {
     private static final String LOG_TAG = MovieDataFetchHelperService.class.getSimpleName();
 
     //TMDB Discovery/Search API constants
-    private static final String TMDB_BASE_URL = "api.themoviedb.org";
+    private static final String TMDB_BASE_URL = "http://api.themoviedb.org";
     private static final int TMDB_API_VERSION = 3;
-    private static final String TMDB_CONFIGURATION_PATH="configuration";
-    private static final String TMDB_DISCOVERY_PATH = "discover";
-    private static final String TMDB_DISCOVER_TYPE_MOVIE = "movie";
-    private static final String TMDB_QUERY_PARAM_API_KEY = "api_key";
-    private static final String TMDB_QUERY_PARAM_PAGE_NUM = "page";
-    private static final String TMDB_QUERY_PARAM_SORT_ORDER = "sort_by";
 
     //TMDB Discovery - Sort options
     private static final String TMDB_QUERY_SORT_VOTE_DESC = "vote_average.desc";
     private static final String TMDB_QUERY_SORT_POPULARITY_DESC = "popularity.desc";
 
+    private static final String YOUTUBE_BASE_URL = "www.youtube.com";
+    private static final String YOUTUBE_VIDEO_PATH = "watch";
+    private static final String YOUTUBE_VIDEO_QUERY = "v";
+
+
     private Configuration tmdbConfig;
-    private RequestQueue requestQueue = null;
+    private TmdbService service;
 
     public MovieDataFetchHelperService() {
         super("MovieDataFetchHelperService");
@@ -78,7 +69,7 @@ public class MovieDataFetchHelperService extends IntentService {
      *
      * @see IntentService
      */
-    public static void startActionDiscover(Context context, int page, String sortBy) {
+    public static void startActionDiscover(Context context, int page, String sortBy, int minVotes) {
         String sortSetting = "";
         switch (sortBy) {
             case MovieFetchServiceContract.SORT_SETTING_POPULARITY:
@@ -98,6 +89,7 @@ public class MovieDataFetchHelperService extends IntentService {
         intent.setAction(MovieFetchServiceContract.ACTION_DISCOVER_MOVIES);
         intent.putExtra(MovieFetchServiceContract.EXTRA_PAGE_NUM, page);
         intent.putExtra(MovieFetchServiceContract.EXTRA_SORT_BY, sortSetting);
+        intent.putExtra(MovieFetchServiceContract.EXTRA_MIN_VOTES, minVotes);
         context.startService(intent);
     }
 
@@ -117,11 +109,13 @@ public class MovieDataFetchHelperService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
-        if (requestQueue == null)
-            requestQueue = Volley.newRequestQueue(this);
-
         tmdbConfig = new Configuration();
-        createTMDBConfig();
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(TMDB_BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        service = retrofit.create(TmdbService.class);
+
     }
 
     @Override
@@ -131,10 +125,13 @@ public class MovieDataFetchHelperService extends IntentService {
             if (MovieFetchServiceContract.ACTION_DISCOVER_MOVIES.equals(action)) {
                 final int page = intent.getIntExtra(MovieFetchServiceContract.EXTRA_PAGE_NUM, 1);
                 final String sortBy = intent.getStringExtra(MovieFetchServiceContract.EXTRA_SORT_BY);
-                handleActionDiscover(page, sortBy);
+                final int minVotes = intent.getIntExtra(MovieFetchServiceContract.EXTRA_MIN_VOTES, 0);
+                handleActionDiscover(page, sortBy, minVotes);
             } else if (MovieFetchServiceContract.ACTION_FETCH_MOVIE_DETAILS.equals(action)) {
-                final int movie = intent.getIntExtra(MovieFetchServiceContract.EXTRA_MOVIE_ID, 0);
-                handleActionFetchMovie(movie);
+                final int movieId = intent.getIntExtra(MovieFetchServiceContract.EXTRA_MOVIE_ID, 0);
+                handleActionFetchMovie(movieId);
+                handleActionFetchMovieTrailers(movieId);
+                handleActionFetchMovieReviews(movieId);
             }
         }
     }
@@ -145,46 +142,41 @@ public class MovieDataFetchHelperService extends IntentService {
      * @param page
      * @param sortBy
      */
-    private void handleActionDiscover(int page, String sortBy) {
-        String discoveryUrl = buildMovieDiscoveryURL(page, sortBy, APIKey.TMDB_API_KEY);
-        Log.v(LOG_TAG, "Discovery URL: " + discoveryUrl);
-        JsonObjectRequest jsonRequest = new JsonObjectRequest(
-                Request.Method.GET,
-                discoveryUrl,
-                "",
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            Map.Entry<Integer, List<Movie>> pageContent = getMoviesList(response);
-                            int pageNum = pageContent.getKey();
-                            List<Movie> movies = pageContent.getValue();
-                            Intent intent = new Intent(MovieDataFetchHelperService.this, MainActivity.class);
-                            intent.setAction(MovieFetchServiceContract.REPLY_DISCOVER_MOVIES_UPDATE);
-                            intent.putExtra(MovieFetchServiceContract.EXTRA_PAGE_NUM, pageNum);
-                            intent.putExtra(MovieFetchServiceContract.EXTRA_MOVIE_CONFIG, getTmdbConfig());
-                            intent.putParcelableArrayListExtra(MovieFetchServiceContract.EXTRA_MOVIE_LIST,
-                                    (ArrayList<? extends Parcelable>) movies);
-                            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-
-                        }
-                        catch (JSONException e) {
-                            Log.e(LOG_TAG, "JSON parse in getMovies failed: " + e.getMessage());
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        if (error.getMessage() != null)
-                            Log.e(LOG_TAG, "Discovery : " + error.getMessage());
-                    }
+    private void handleActionDiscover(int page, String sortBy, int minVotes) {
+        createTMDBConfig();
+        Call<TmdbResponse> tmdbResponseCall = service.discoverMovies(TMDB_API_VERSION,
+                APIKey.TMDB_API_KEY, sortBy, page, minVotes);
+        try {
+            TmdbResponse tmdbResponse = tmdbResponseCall.execute().body();
+            List<MovieResponse> movieResults = tmdbResponse.getResults();
+            List<Movie> movies = new ArrayList<>();
+            for (MovieResponse result : movieResults) {
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+                Date releaseDate = null;
+                try {
+                    releaseDate = df.parse(result.getReleaseDate());
+                } catch (ParseException e) {
+                    Log.e(LOG_TAG, "Movie " + result.getTitle() + ", " + result.getReleaseDate() + " : " + e.getMessage());
                 }
 
-        );
+                String thumbnails =  getTmdbConfig().getImageBaseUrl() +
+                        Configuration.PREFERRED_IMAGE_SIZE +
+                        result.getPosterPath();
+                Movie movie = new Movie(result.getId(), result.getTitle(), result.getLanguage(),
+                        thumbnails, result.getOverview(), result.getVoteAverage(),
+                        result.getVoteCount(), 0, releaseDate, null, null);
+                movies.add(movie);
+            }
 
-        requestQueue.add(jsonRequest);
-
+            Intent intent = new Intent(MovieDataFetchHelperService.this, MainActivity.class);
+            intent.setAction(MovieFetchServiceContract.REPLY_DISCOVER_MOVIES_UPDATE);
+            intent.putExtra(MovieFetchServiceContract.EXTRA_PAGE_NUM, tmdbResponse.getPage());
+            intent.putParcelableArrayListExtra(MovieFetchServiceContract.EXTRA_MOVIE_LIST,
+                    (ArrayList<? extends Parcelable>) movies);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "Network API failed: " + e.getMessage());
+        }
     }
 
     /**
@@ -192,16 +184,28 @@ public class MovieDataFetchHelperService extends IntentService {
      * parameters.
      */
     private void handleActionFetchMovie(int movieId) {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://"+TMDB_BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        TmdbService service = retrofit.create(TmdbService.class);
         Call<MovieResponse> movieResultCall = service.fetchMovieDetails(TMDB_API_VERSION, movieId, APIKey.TMDB_API_KEY);
         try {
-            retrofit.Response<MovieResponse> response = movieResultCall.execute();
-            MovieResponse movie = response.body();
-            Log.v(LOG_TAG, movie.getTitle() + ": " + movie.getRuntime() + " mins");
+            MovieResponse response = movieResultCall.execute().body();
+
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            Date releaseDate = null;
+            try {
+                releaseDate = df.parse(response.getReleaseDate());
+            } catch (ParseException e) {
+                Log.e(LOG_TAG, "Movie " + response.getTitle() + ", " + response.getReleaseDate() + " : " + e.getMessage());
+            }
+
+            String thumbnail =  getTmdbConfig().getImageBaseUrl() +
+                    Configuration.PREFERRED_IMAGE_SIZE +
+                    response.getPosterPath();
+            Movie movie = new Movie(response.getId(), response.getTitle(), response.getLanguage(),
+                    thumbnail, response.getOverview(), response.getVoteAverage(), response.getVoteCount(),
+                    response.getRuntime(), releaseDate, null, null);
+
+            Intent intent = new Intent(MovieFetchServiceContract.REPLY_FETCH_MOVIE_UPDATE);
+            intent.putExtra(MovieFetchServiceContract.EXTRA_MOVIE_DETAILS, movie);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 
         } catch (IOException e) {
             Log.e(LOG_TAG, "Network request failure");
@@ -211,136 +215,80 @@ public class MovieDataFetchHelperService extends IntentService {
 
     /**
      *
+     * @param movieId
      */
-    private void createTMDBConfig() {
-        JsonObjectRequest jsonRequest = new JsonObjectRequest(
-                Request.Method.GET,
-                buildTMDBConfigURL(APIKey.TMDB_API_KEY),
-                "",
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        if (response == null) {
-                            Log.e(LOG_TAG, "Null response to config request");
-                            return;
-                        }
-
-                        try {
-                            JSONObject imageProps = response.getJSONObject("images");
-                            String imageUrl = imageProps.getString("base_url");
-                            String imageUrlSecure = imageProps.getString("secure_base_url");
-                            JSONArray availableSizes = (JSONArray)imageProps.get("poster_sizes");
-                            List<String> posterSizes = new ArrayList<>();
-                            for (int i = 0; i < availableSizes.length(); ++i) {
-                                posterSizes.add(availableSizes.getString(i));
-                            }
-
-                            tmdbConfig = new Configuration(imageUrl, imageUrlSecure, posterSizes);
-                        } catch (JSONException e) {
-                            Log.e(LOG_TAG, e.getMessage());
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        if (error.getMessage() != null)
-                            Log.v(LOG_TAG, "Get config error : " + error.getMessage());
-                    }
-                }
-            );
-
-        requestQueue.add(jsonRequest);
-    }
-
-    /**
-     *
-     * @param apiKey TMDB API key
-     * @return A URL that can be used to get the TMDB configuration (image base paths etc.)
-     */
-    private String buildTMDBConfigURL(@NonNull String apiKey) {
-        Uri.Builder builder = new Uri.Builder();
-        Uri uri = builder.scheme("http").authority(TMDB_BASE_URL)
-                         .path(String.valueOf(TMDB_API_VERSION))
-                         .appendPath(TMDB_CONFIGURATION_PATH)
-                         .appendQueryParameter(TMDB_QUERY_PARAM_API_KEY, apiKey)
-                         .build();
-
-        return uri.toString();
-    }
-
-    /**
-     * Build the URL to invoke the TMDB movie discovery API
-     * @param page Page number to query for; the TMDB API returns at most 20 items/page as a result
-     * @param sortBy Sort order (popularity/rating)
-     * @param apiKey TMDB API key
-     * @return A URL that can be used to invoke the movie discovery API
-     */
-    private String buildMovieDiscoveryURL(int page, @NonNull String sortBy, @NonNull String apiKey) {
-        Uri.Builder builder = new Uri.Builder();
-        builder = builder.scheme("http").authority(TMDB_BASE_URL)
-                         .path(String.valueOf(TMDB_API_VERSION))
-                         .appendPath(TMDB_DISCOVERY_PATH)
-                         .appendPath(TMDB_DISCOVER_TYPE_MOVIE)
-                         .appendQueryParameter(TMDB_QUERY_PARAM_API_KEY, apiKey)
-                         .appendQueryParameter(TMDB_QUERY_PARAM_SORT_ORDER, sortBy)
-                         .appendQueryParameter(TMDB_QUERY_PARAM_PAGE_NUM, String.valueOf(page));
-
-        if (sortBy.equals(TMDB_QUERY_SORT_VOTE_DESC))
-            builder.appendQueryParameter("vote_count.gte", String.valueOf(50));
-
-        Uri uri = builder.build();
-        return uri.toString();
-    }
-
-    /**
-     *
-     * @param movieData JSON response from TMDB API
-     * @return An std::pair like Object with page number as Key and list of movies in the page as
-     *         Value
-     * @throws JSONException
-     */
-    private Map.Entry<Integer, List<Movie>> getMoviesList(@NonNull JSONObject movieData) throws JSONException {
-        int page = movieData.getInt("page");
-        JSONArray results = movieData.getJSONArray("results");
-        if (results == null) {
-            Log.e(LOG_TAG, "No data available; empty list");
-            return new HashMap.SimpleEntry<Integer, List<Movie>>(page, new ArrayList<Movie>());
-        }
-
-        List<Movie> movies = new ArrayList<>();
-        for (int i = 0; i < results.length(); ++i) {
-            JSONObject result = (JSONObject)results.get(i);
-            int id = result.getInt("id");
-            String title = result.getString("original_title");
-            String language = result.getString("original_language");
-
-            String thumbnails =  getTmdbConfig().getImageBaseUrl() +
-                    Configuration.PREFERRED_IMAGE_SIZE +
-                    result.getString("poster_path");
-
-            String plot = result.getString("overview");
-            double rating = result.getDouble("vote_average");
-            int vote_count = result.getInt("vote_count");
-            String date = result.getString("release_date");
-
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-            Date releaseDate = null;
-            try {
-                releaseDate = df.parse(date);
-            } catch (ParseException e) {
-                Log.e(LOG_TAG, "Movie " + title + ", " + date + " : " + e.getMessage());
+    private void handleActionFetchMovieTrailers(int movieId)
+    {
+        Call<VideoResponse> videoResponseCall = service.fetchMovieTrailers(TMDB_API_VERSION, movieId, APIKey.TMDB_API_KEY);
+        try {
+            VideoResponse response = videoResponseCall.execute().body();
+            List<Video> videos = new ArrayList<>();
+            for (VideoResponse.VideoItem item : response.getResults()) {
+                Video video = new Video(item.getId(), createYouTubeURL(item.getKey()), item.getType());
+                videos.add(video);
             }
 
-            //trailers and reviews require further API calls; these will be retrieved if the user
-            //wishes to see more details in the Details Activity
-            Movie movie = new Movie(id, title, language, thumbnails, plot, rating,
-                    vote_count, releaseDate, null, null);
-            movies.add(movie);
-
+            Intent intent = new Intent(MovieFetchServiceContract.REPLY_FETCH_MOVIE_TRAILERS);
+            intent.putParcelableArrayListExtra(MovieFetchServiceContract.EXTRA_MOVIE_TRAILERS,
+                    (ArrayList<? extends Parcelable>) videos);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+        } catch (IOException e) {
+            Log.v(LOG_TAG, "handleActionFetchMovieTrailers()::Network API failed; " + e.getMessage());
         }
-
-        return new HashMap.SimpleEntry<>(page, movies);
     }
+
+    /**
+     *
+     * @param movieId
+     */
+    private void handleActionFetchMovieReviews(int movieId)
+    {
+        Call<ReviewResponse> reviewResponseCall = service.fetchMovieReviews(TMDB_API_VERSION, movieId, APIKey.TMDB_API_KEY);
+        try {
+            ReviewResponse response = reviewResponseCall.execute().body();
+            List<Review> reviews = new ArrayList<>(response.getTotal_results());
+            for (ReviewResponse.ReviewItem item : response.getResults()) {
+                Review review = new Review(item.getId(), item.getAuthor(), item.getContent(), item.getUrl());
+                reviews.add(review);
+            }
+
+            Intent intent = new Intent(MovieFetchServiceContract.REPLY_FETCH_MOVIE_REVIEWS);
+            intent.putParcelableArrayListExtra(MovieFetchServiceContract.EXTRA_MOVIE_REVIEWS,
+                    (ArrayList<? extends Parcelable>) reviews);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+        } catch (IOException e) {
+            Log.v(LOG_TAG, "handleActionFetchMovieReviews()::Network API failed; " + e.getMessage());
+        }
+    }
+
+    /**
+     *
+     */
+    private void createTMDBConfig() {
+        Call<ConfigResponse> configResponseCall = service.getConfiguration(TMDB_API_VERSION, APIKey.TMDB_API_KEY);
+        try {
+            ConfigResponse configResponse = configResponseCall.execute().body();
+            tmdbConfig = new Configuration(configResponse.getBaseUrl(), configResponse.getSecureBaseUrl(), configResponse.getPosterSizes());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     *
+     * @param videoKey
+     * @return
+     */
+    private String createYouTubeURL(String videoKey) {
+        Uri uri = new Uri.Builder()
+                .scheme("https").authority(YOUTUBE_BASE_URL)
+                .appendPath(YOUTUBE_VIDEO_PATH)
+                .appendQueryParameter(YOUTUBE_VIDEO_QUERY, videoKey)
+                .build();
+
+        return uri.toString();
+    }
+
 }
 

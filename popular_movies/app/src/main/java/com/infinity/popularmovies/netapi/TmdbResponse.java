@@ -1,7 +1,5 @@
 package com.infinity.popularmovies.netapi;
 
-import com.infinity.popularmovies.Movie;
-
 import java.util.List;
 
 /**
@@ -9,16 +7,30 @@ import java.util.List;
  */
 public class TmdbResponse {
     private int page;
-    private List<Movie> results;
+    private List<MovieResponse> results;
     private int total_results;
     private int total_pages;
 
-    public TmdbResponse(int page, List<Movie> movies, int results, int pages) {
+    public TmdbResponse(int page, List<MovieResponse> movies, int results, int pages) {
         this.page = page;
         this.results = movies;
         this.total_results = results;
         this.total_pages = pages;
     }
 
+    public int getPage() {
+        return page;
+    }
 
+    public List<MovieResponse> getResults() {
+        return results;
+    }
+
+    public int getTotal_results() {
+        return total_results;
+    }
+
+    public int getTotal_pages() {
+        return total_pages;
+    }
 }

@@ -11,12 +11,12 @@ public class MovieResponse {
     private String overview;
     private String release_date;
     private String poster_path;
-    private String vote_count;
-    private String vote_average;
+    private int vote_count;
+    private double vote_average;
 
     public MovieResponse(int id, String title, String original_language, int runtime,
-                         String overview, String release_date, String poster_path, String vote_count,
-                         String vote_average) {
+                         String overview, String release_date, String poster_path, int vote_count,
+                         double vote_average) {
         this.id = id;
         this.title = title;
         this.original_language = original_language;
@@ -36,7 +36,7 @@ public class MovieResponse {
         return title;
     }
 
-    public String getOriginal_language() {
+    public String getLanguage() {
         return original_language;
     }
 
@@ -48,19 +48,19 @@ public class MovieResponse {
         return overview;
     }
 
-    public String getRelease_date() {
+    public String getReleaseDate() {
         return release_date;
     }
 
-    public String getPoster_path() {
+    public String getPosterPath() {
         return poster_path;
     }
 
-    public String getVote_count() {
+    public int getVoteCount() {
         return vote_count;
     }
 
-    public String getVote_average() {
+    public double getVoteAverage() {
         return vote_average;
     }
 }

@@ -5,6 +5,7 @@ import android.os.Parcelable;
 import android.util.Log;
 
 import com.infinity.popularmovies.data.Review;
+import com.infinity.popularmovies.data.Video;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -24,12 +25,13 @@ public class Movie implements Parcelable {
     private String synopsis;
     private double rating;
     private int voteCount;
+    private int duration;
     private Date releaseDate;
-    private List<String> trailers = new ArrayList<>();
+    private List<Video> trailers = new ArrayList<>();
     private List<Review> reviews = new ArrayList<>();
 
     public Movie(int id, String title, String language, String posterThumbnail, String synopsis,
-                 double rating, int voteCount, Date releaseDate, List<String> trailers,
+                 double rating, int voteCount, int duration, Date releaseDate, List<Video> trailers,
                  List<Review> reviews) {
         this.id = id;
         this.title = title;
@@ -38,26 +40,13 @@ public class Movie implements Parcelable {
         this.synopsis = synopsis;
         this.rating = rating;
         this.voteCount = voteCount;
+        this.duration = duration;
         this.releaseDate = releaseDate;
         if (trailers != null)
-            this.trailers = trailers;
-        else
-            this.trailers = new ArrayList<>();
+            this.trailers.addAll(trailers);
 
         if (reviews != null)
-            this.reviews = reviews;
-        else
-            this.reviews = new ArrayList<>();
-    }
-
-    public Movie(int id, String title, String language, String posterThumbnail, String synopsis, double rating, Date releaseDate) {
-        this.id = id;
-        this.title = title;
-        this.language = language;
-        this.posterThumbnail = posterThumbnail;
-        this.synopsis = synopsis;
-        this.rating = rating;
-        this.releaseDate = releaseDate;
+            this.reviews.addAll(reviews);
     }
 
     private Movie(Parcel in) {
@@ -68,12 +57,13 @@ public class Movie implements Parcelable {
         this.synopsis = in.readString();
         this.rating = in.readDouble();
         this.voteCount = in.readInt();
+        this.duration = in.readInt();
         try {
             this.releaseDate = new SimpleDateFormat("yyyy-MM-dd").parse(in.readString());
         } catch (ParseException e) {
             Log.e("Movie", "Date parse failed: " + e.getMessage());
         }
-        in.readStringList(this.trailers);
+        in.readTypedList(this.trailers, Video.CREATOR);
         in.readTypedList(this.reviews, Review.CREATOR);
     }
 
@@ -104,8 +94,9 @@ public class Movie implements Parcelable {
         dest.writeString(getSynopsis());
         dest.writeDouble(getRating());
         dest.writeInt(getVoteCount());
+        dest.writeInt(getDuration());
         dest.writeString(new SimpleDateFormat("yyyy-MM-dd").format(getReleaseDate()));
-        dest.writeStringList(getTrailers());
+        dest.writeTypedList(getTrailers());
         dest.writeTypedList(getReviews());
 
     }
@@ -174,11 +165,11 @@ public class Movie implements Parcelable {
         this.voteCount = voteCount;
     }
 
-    public List<String> getTrailers() {
+    public List<Video> getTrailers() {
         return trailers;
     }
 
-    public void setTrailers(List<String> trailers) {
+    public void setTrailers(List<Video> trailers) {
         this.trailers = trailers;
     }
 
@@ -190,5 +181,12 @@ public class Movie implements Parcelable {
         this.reviews = reviews;
     }
 
+    public int getDuration() {
+        return duration;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
 }
 

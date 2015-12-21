@@ -71,6 +71,13 @@ public class MainActivityFragment extends Fragment {
             sharedPref.edit().putString(getString(R.string.preferences_movie_sort_order),
                     MovieFetchServiceContract.SORT_SETTING_POPULARITY).apply();
         }
+
+        int minVotes = sharedPref.getInt(getString(R.string.preferences_movie_discover_min_votes), -1);
+        if (minVotes == -1) {
+            Log.v(LOG_TAG, "No min. vote preferences; creating defaults");
+            sharedPref.edit().putInt(getString(R.string.preferences_movie_discover_min_votes),
+                    MovieFetchServiceContract.DEFAULT_MIN_VOTES_REQ).apply();
+        }
     }
 
     @Override
@@ -197,7 +204,8 @@ public class MainActivityFragment extends Fragment {
      */
     private void startMovieDiscovery(int currentpage) {
         String sortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), null);
-        MovieDataFetchHelperService.startActionDiscover(getActivity(), ++currentpage, sortOrder);
+        int minVotes = sharedPref.getInt(getString(R.string.preferences_movie_discover_min_votes), 0);
+        MovieDataFetchHelperService.startActionDiscover(getActivity(), ++currentpage, sortOrder, minVotes);
     }
 
 }
