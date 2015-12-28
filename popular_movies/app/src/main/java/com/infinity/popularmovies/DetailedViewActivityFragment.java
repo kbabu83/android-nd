@@ -127,7 +127,7 @@ public class DetailedViewActivityFragment extends Fragment {
             public View getView(int position, View convertView, ViewGroup parent) {
                 LinearLayout containerLayout;
                 if (convertView == null) {
-                    containerLayout = (LinearLayout) LayoutInflater.from(getContext()).inflate(R.layout.list_item_movie_review, null);
+                    containerLayout = (LinearLayout) LayoutInflater.from(getContext()).inflate(R.layout.list_item_movie_review, parent, false);
                 }
                 else {
                     containerLayout = (LinearLayout) convertView;
