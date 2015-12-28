@@ -1,4 +1,4 @@
-<android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent" android:layout_height="match_parent">
 
@@ -63,15 +63,13 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_below="@id/container_movie_details">
+
             <TextView style="@style/content_section_header_large"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:paddingBottom="10dp"
                 android:text="@string/txt_movie_trailers_title" />
 
-            <ListView android:id="@+id/list_view_movie_trailers"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:nestedScrollingEnabled="true" />
+            <!-- Content will be added to ViewGroup programatically -->
 
         </LinearLayout>
 
@@ -81,14 +79,13 @@
             android:orientation="vertical"
             android:layout_below="@id/container_movie_trailers"
             android:layout_marginTop="20dp">
+
             <TextView style="@style/content_section_header_large"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:paddingBottom="10dp"
                 android:text="@string/txt_movie_reviews_title" />
 
-            <ListView android:id="@+id/list_view_movie_reviews"
-                android:layout_width="match_parent" android:layout_height="match_parent"
-                android:nestedScrollingEnabled="true" />
+            <!-- Content will be added to ViewGroup programatically -->
 
         </LinearLayout>
 
@@ -101,4 +98,4 @@
 
     </RelativeLayout>
 
-</android.support.v4.widget.NestedScrollView>
+</ScrollView>
