@@ -17,18 +17,22 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
-    <style name="txt_content_section_header">
+    <style name="content_section_header_text">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">@dimen/txt_size_content_small</item>
     </style>
 
-    <style name="txt_content_section_text">
+    <style name="content_section_text">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textStyle">normal</item>
         <item name="android:textSize">@dimen/txt_size_content_small</item>
+    </style>
+
+    <style name="content_section_header_large" parent="content_section_header_text">
+        <item name="android:textSize">@dimen/txt_size_content_header_large</item>
     </style>
 
 </resources>

@@ -8,17 +8,20 @@ import android.os.Parcelable;
  */
 public class Video implements Parcelable {
     private String id;
+    private String name;
     private String link;
     private String type;
 
-    public Video(String id, String link, String type) {
+    public Video(String id, String name, String link, String type) {
         this.id = id;
+        this.name = name;
         this.link = link;
         this.type = type;
     }
 
     protected Video(Parcel in) {
         id = in.readString();
+        name = in.readString();
         link = in.readString();
         type = in.readString();
     }
@@ -39,6 +42,10 @@ public class Video implements Parcelable {
         return id;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public String getLink() {
         return link;
     }
@@ -55,11 +62,9 @@ public class Video implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(getId());
+        dest.writeString(getName());
         dest.writeString(getLink());
         dest.writeString(getType());
     }
 
-
-
 }
-

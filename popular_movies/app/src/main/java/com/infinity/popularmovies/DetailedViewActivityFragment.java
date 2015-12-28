@@ -9,13 +9,18 @@ import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -32,6 +37,14 @@ public class DetailedViewActivityFragment extends Fragment {
     private Movie movie;
     Activity parent;
     View rootView;
+    private List<String> movieTrailerList = new ArrayList<>();
+    private ArrayAdapter<String> mMovieTrailerDataAdapter;
+
+    private List<String> movieReviewList = new ArrayList<>();
+    private ArrayAdapter<String> mMovieReviewDataAdapter;
+
+    private List<Pair<String, String>> movieReviewsList = new ArrayList<>();
+    private ArrayAdapter<Pair<String, String>> mMovieReviewAdapter;
 
     private IntentFilter intentFilter = new IntentFilter();
 
@@ -56,8 +69,8 @@ public class DetailedViewActivityFragment extends Fragment {
                         Log.v(LOG_TAG, "No videos available for movie");
                         return;
                     }
-
                     movie.setTrailers(videos);
+                    updateMovieTrailers();
                     break;
 
                 case MovieFetchServiceContract.REPLY_FETCH_MOVIE_REVIEWS:
@@ -66,8 +79,8 @@ public class DetailedViewActivityFragment extends Fragment {
                         Log.v(LOG_TAG, "No reviews available for movie");
                         return;
                     }
-
                     movie.setReviews(reviews);
+                    updateMovieReviews();
                     break;
 
                 default:
@@ -87,7 +100,7 @@ public class DetailedViewActivityFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(LayoutInflater inflater, final ViewGroup container,
                              Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.fragment_detailed_view, container, false);
         Intent intent = parent.getIntent();
@@ -95,8 +108,47 @@ public class DetailedViewActivityFragment extends Fragment {
         if (movie == null)
             return rootView;
 
-        updateViewContent();
+        mMovieTrailerDataAdapter = new ArrayAdapter<>(getActivity(), R.layout.list_item_movie_trailer,
+                R.id.txt_trailer_title, movieTrailerList);
 
+        ListView trailerList = (ListView) rootView.findViewById(R.id.list_view_movie_trailers);
+        trailerList.setAdapter(mMovieTrailerDataAdapter);
+
+/*
+        mMovieReviewDataAdapter = new ArrayAdapter<>(parent, R.layout.list_item_movie_review,
+                R.id.txt_movie_review_content, movieReviewList);
+        ListView reviewList = (ListView) rootView.findViewById(R.id.list_view_movie_reviews);
+        reviewList.setAdapter(mMovieReviewDataAdapter);
+*/
+
+        mMovieReviewAdapter = new ArrayAdapter<Pair<String, String>>(parent,
+                R.layout.list_item_movie_review, R.id.container_movie_review_entry, movieReviewsList) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                LinearLayout containerLayout;
+                if (convertView == null) {
+                    containerLayout = (LinearLayout) LayoutInflater.from(getContext()).inflate(R.layout.list_item_movie_review, null);
+                }
+                else {
+                    containerLayout = (LinearLayout) convertView;
+                }
+
+                Pair<String, String> currentItem = getItem(position);
+                TextView authorText = (TextView) containerLayout.findViewById(R.id.txt_movie_review_title);
+                authorText.setText(currentItem.first);
+
+                TextView contentText = (TextView) containerLayout.findViewById(R.id.txt_movie_review_content);
+                contentText.setText(currentItem.second);
+
+                return containerLayout;
+            }
+
+        };
+
+        ListView reviewsList = (ListView) rootView.findViewById(R.id.list_view_movie_reviews);
+        reviewsList.setAdapter(mMovieReviewAdapter);
+
+        updateViewContent();
         return rootView;
     }
 
@@ -154,6 +206,38 @@ public class DetailedViewActivityFragment extends Fragment {
         if (relDateText != null) {
             relDateText.setText(new SimpleDateFormat("dd-MM-yyyy").format(releaseDate));
         }
+
+    }
+
+    private void updateMovieTrailers() {
+        Log.v(LOG_TAG, "Number of trailers: " + movie.getTrailers().size());
+        movieTrailerList.clear();
+        for (Video video : movie.getTrailers())
+            movieTrailerList.add(video.getName());
+
+        mMovieTrailerDataAdapter.notifyDataSetChanged();
+
+    }
+
+    private void updateMovieReviews() {
+        Log.v(LOG_TAG, "Number of reviews: " + movie.getReviews().size());
+        movieReviewsList.clear();
+        for (Review review : movie.getReviews()) {
+            movieReviewsList.add(new Pair<>(review.getAuthor(), review.getContent()));
+        }
+
+        mMovieReviewAdapter.notifyDataSetChanged();
+
+    }
+
+    private void updateMovieReviews2() {
+        Log.v(LOG_TAG, "Number of reviews: " + movie.getReviews().size());
+        movieReviewList.clear();
+        for (Review review : movie.getReviews()) {
+            movieReviewList.add(review.getContent());
+        }
+
+        mMovieReviewDataAdapter.notifyDataSetChanged();
 
     }
 

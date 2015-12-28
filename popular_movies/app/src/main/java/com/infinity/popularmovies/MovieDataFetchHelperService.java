@@ -224,7 +224,8 @@ public class MovieDataFetchHelperService extends IntentService {
             VideoResponse response = videoResponseCall.execute().body();
             List<Video> videos = new ArrayList<>();
             for (VideoResponse.VideoItem item : response.getResults()) {
-                Video video = new Video(item.getId(), createYouTubeURL(item.getKey()), item.getType());
+                Video video = new Video(item.getId(), item.getName(),
+                        createYouTubeURL(item.getKey()), item.getType());
                 videos.add(video);
             }
 

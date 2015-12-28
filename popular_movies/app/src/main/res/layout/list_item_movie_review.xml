@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/container_movie_review_entry"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginBottom="40dp">
+
+    <TextView android:id="@+id/txt_movie_review_title"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:lines="1" android:textSize="15sp" android:textStyle="bold" />
+
+    <TextView android:id="@+id/txt_movie_review_content"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:textSize="14sp" android:textStyle="normal" />
+
+</LinearLayout>

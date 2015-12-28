@@ -9,12 +9,14 @@ public class VideoResponse {
 
     public class VideoItem {
         private String id;
+        private String name;
         private String key;
         private String site;
         private String type;
 
-        public VideoItem(String id, String key, String site, String type) {
+        public VideoItem(String id, String name, String key, String site, String type) {
             this.id = id;
+            this.name = name;
             this.key = key;
             this.site = site;
             this.type = type;
@@ -22,6 +24,10 @@ public class VideoResponse {
 
         public String getId() {
             return id;
+        }
+
+        public String getName() {
+            return name;
         }
 
         public String getKey() {
