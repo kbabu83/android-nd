@@ -10,12 +10,14 @@ public class Video implements Parcelable {
     private String id;
     private String name;
     private String link;
+    private String thumbnail;
     private String type;
 
-    public Video(String id, String name, String link, String type) {
+    public Video(String id, String name, String link, String thumbnail, String type) {
         this.id = id;
         this.name = name;
         this.link = link;
+        this.thumbnail = thumbnail;
         this.type = type;
     }
 
@@ -23,6 +25,7 @@ public class Video implements Parcelable {
         id = in.readString();
         name = in.readString();
         link = in.readString();
+        thumbnail = in.readString();
         type = in.readString();
     }
 
@@ -50,6 +53,10 @@ public class Video implements Parcelable {
         return link;
     }
 
+    public String getThumbnail() {
+        return thumbnail;
+    }
+
     public String getType() {
         return type;
     }
@@ -64,6 +71,7 @@ public class Video implements Parcelable {
         dest.writeString(getId());
         dest.writeString(getName());
         dest.writeString(getLink());
+        dest.writeString(getThumbnail());
         dest.writeString(getType());
     }
 

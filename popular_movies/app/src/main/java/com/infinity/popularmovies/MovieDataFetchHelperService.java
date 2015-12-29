@@ -48,6 +48,7 @@ public class MovieDataFetchHelperService extends IntentService {
     private static final String TMDB_QUERY_SORT_POPULARITY_DESC = "popularity.desc";
 
     private static final String YOUTUBE_BASE_URL = "www.youtube.com";
+    private static final String YOUTUBE_IMG_BASE_URL = "img.youtube.com";
     private static final String YOUTUBE_VIDEO_PATH = "watch";
     private static final String YOUTUBE_VIDEO_QUERY = "v";
 
@@ -225,7 +226,8 @@ public class MovieDataFetchHelperService extends IntentService {
             List<Video> videos = new ArrayList<>();
             for (VideoResponse.VideoItem item : response.getResults()) {
                 Video video = new Video(item.getId(), item.getName(),
-                        createYouTubeURL(item.getKey()), item.getType());
+                        createYouTubeURL(item.getKey()), createYouTubeThumbnailURL(item.getKey()),
+                        item.getType());
                 videos.add(video);
             }
 
@@ -289,6 +291,18 @@ public class MovieDataFetchHelperService extends IntentService {
                 .build();
 
         return uri.toString();
+    }
+
+    private String createYouTubeThumbnailURL(String videoKey) {
+        Uri uri = new Uri.Builder()
+                .scheme("http").authority(YOUTUBE_IMG_BASE_URL)
+                .appendPath("vi")
+                .appendPath(videoKey)
+                .appendPath("default.jpg")
+                .build();
+
+        return uri.toString();
+
     }
 
 }

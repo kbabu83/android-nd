@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Popular Movies</string>
     <string name="action_settings">Settings</string>
+    <string name="action_add_favourite">Add to favourites</string>
+    <string name="action_del_favourite">Remove from favourites</string>
     <string name="action_title_sort_by">Sort by</string>
     <string name="action_sort_by_popularity">By popularity</string>
     <string name="action_sort_by_rating">By rating</string>

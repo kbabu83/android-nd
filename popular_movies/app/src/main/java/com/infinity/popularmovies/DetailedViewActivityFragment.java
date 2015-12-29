@@ -5,15 +5,20 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -83,6 +88,23 @@ public class DetailedViewActivityFragment extends Fragment {
         intentFilter.addAction(MovieFetchServiceContract.REPLY_FETCH_MOVIE_UPDATE);
         intentFilter.addAction(MovieFetchServiceContract.REPLY_FETCH_MOVIE_TRAILERS);
         intentFilter.addAction(MovieFetchServiceContract.REPLY_FETCH_MOVIE_REVIEWS);
+
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_detailed_view, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_set_favourite) {
+            Toast.makeText(parent, "Feature not yet available", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -179,14 +201,36 @@ public class DetailedViewActivityFragment extends Fragment {
             trailerListContainer.removeViewAt(i);
         }
 
+        class ItemTextClickListener implements View.OnClickListener {
+            private String clickableLink;
+
+            public ItemTextClickListener(String link) {
+                this.clickableLink = link;
+            }
+
+            @Override
+            public void onClick(View v) {
+                Intent youtubeIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(clickableLink));
+                if (youtubeIntent.resolveActivity(parent.getPackageManager()) != null)
+                    startActivity(youtubeIntent);
+            }
+        }
+
         for (Video video : movie.getTrailers()) {
             ViewGroup container = (ViewGroup) LayoutInflater.from(parent).inflate(
                     R.layout.list_item_movie_trailer, trailerListContainer, false);
 
+            ImageView videoThumbnail = (ImageView) container.findViewById(R.id.thumbnail_preview);
+            Picasso.with(parent).load(video.getThumbnail()).
+                    placeholder(R.drawable.no_preview_available).into(videoThumbnail);
+
             TextView titleText = (TextView) container.findViewById(R.id.txt_trailer_title);
             titleText.setText(video.getName());
 
+            //titleText.setOnClickListener(new ItemTextClickListener(video.getLink()));
+
             trailerListContainer.addView(container);
+            trailerListContainer.setOnClickListener(new ItemTextClickListener(video.getLink()));
         }
 
     }
@@ -206,7 +250,8 @@ public class DetailedViewActivityFragment extends Fragment {
             reviewListContainer.removeViewAt(i);
         }
 
-        for (Review review : movie.getReviews()) {
+        List<Review> reviews = movie.getReviews();
+        for (Review review : reviews) {
             ViewGroup container = (ViewGroup) LayoutInflater.from(parent).inflate(
                     R.layout.list_item_movie_review, reviewListContainer, false);
             TextView authorText = (TextView) container.findViewById(R.id.txt_movie_review_title);
