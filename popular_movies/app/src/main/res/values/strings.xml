@@ -4,9 +4,9 @@
     <string name="action_add_favourite">Add to favourites</string>
     <string name="action_del_favourite">Remove from favourites</string>
     <string name="action_title_sort_by">Sort by</string>
-    <string name="action_sort_by_popularity">By popularity</string>
-    <string name="action_sort_by_rating">By rating</string>
-    <string name="action_sort_by_favourite">By favourites</string>
+    <string name="action_sort_by_popularity">Most popular</string>
+    <string name="action_sort_by_rating">Highest rated</string>
+    <string name="action_sort_by_favourite">Show my favourites</string>
     <string name="title_activity_detailed_view">DetailedViewActivity</string>
     <string name="txt_movie_rating_title">Rating:</string>
     <string name="txt_movie_release_date_title">Release Date:</string>

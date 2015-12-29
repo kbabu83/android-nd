@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.infinity.popularmovies.data.FavouritesOpenHelper;
+import com.infinity.popularmovies.data.Movie;
 import com.infinity.popularmovies.data.MovieDBContract;
 import com.infinity.popularmovies.data.MovieFetchServiceContract;
 import com.infinity.popularmovies.data.Review;

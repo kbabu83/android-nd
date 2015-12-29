@@ -1,11 +1,8 @@
-package com.infinity.popularmovies;
+package com.infinity.popularmovies.data;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
-
-import com.infinity.popularmovies.data.Review;
-import com.infinity.popularmovies.data.Video;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

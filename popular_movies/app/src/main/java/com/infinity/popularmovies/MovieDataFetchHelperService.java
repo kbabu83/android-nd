@@ -8,6 +8,7 @@ import android.os.Parcelable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.infinity.popularmovies.data.Movie;
 import com.infinity.popularmovies.data.MovieFetchServiceContract;
 import com.infinity.popularmovies.data.Review;
 import com.infinity.popularmovies.data.Video;
