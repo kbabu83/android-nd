@@ -2,9 +2,12 @@ package com.infinity.popularmovies;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -24,6 +27,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import com.infinity.popularmovies.data.FavouritesOpenHelper;
+import com.infinity.popularmovies.data.MovieDBContract;
 import com.infinity.popularmovies.data.MovieFetchServiceContract;
 import com.infinity.popularmovies.data.Review;
 import com.infinity.popularmovies.data.Video;
@@ -98,13 +103,112 @@ public class DetailedViewActivityFragment extends Fragment {
     }
 
     @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        MenuItem menuItem = menu.findItem(R.id.action_set_favourite);
+        FavouritesOpenHelper dbHelper = new FavouritesOpenHelper(parent);
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        if (isFavourite(db, movie)) {
+            menuItem.setIcon(android.R.drawable.btn_star_big_on);
+        }
+        else {
+            menuItem.setIcon(android.R.drawable.btn_star_big_off);
+        }
+
+        db.close();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_set_favourite) {
-            Toast.makeText(parent, "Feature not yet available", Toast.LENGTH_SHORT).show();
+            FavouritesOpenHelper dbHelper = new FavouritesOpenHelper(parent);
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+            if (isFavourite(db, movie)) {
+                Log.v(LOG_TAG, "Movie already set as favourite, removing from DB");
+                if(removeFavourite(db, movie)) {
+                    item.setIcon(android.R.drawable.btn_star_big_off);
+                    Toast.makeText(parent, "Removed from favourites", Toast.LENGTH_SHORT).show();
+                }
+            }
+            else {
+                Log.v(LOG_TAG, "Movie not stored as fav yet; adding to DB");
+                if (addFavourite(db, movie)) {
+                    item.setIcon(android.R.drawable.btn_star_big_on);
+                    Toast.makeText(parent, "Added to favourites", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            db.close();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     *
+     * @param db
+     * @param movie
+     * @return
+     */
+    private boolean addFavourite(SQLiteDatabase db, Movie movie) {
+        ContentValues movieContentValues = new ContentValues();
+        movieContentValues.put(MovieDBContract.MovieEntry._ID, movie.getId());
+        movieContentValues.put(MovieDBContract.MovieEntry.COLUMN_MOVIE_TITLE, movie.getTitle());
+        movieContentValues.put(MovieDBContract.MovieEntry.COLUMN_MOVIE_PLOT, movie.getSynopsis());
+        movieContentValues.put(MovieDBContract.MovieEntry.COLUMN_MOVIE_POSTER, movie.getPosterThumbnail());
+        movieContentValues.put(MovieDBContract.MovieEntry.COLUMN_MOVIE_RELEASE_DATE, movie.getReleaseDate().toString());
+        movieContentValues.put(MovieDBContract.MovieEntry.COLUMN_MOVIE_RATING, movie.getRating());
+        movieContentValues.put(MovieDBContract.MovieEntry.COLUMN_MOVIE_VOTE_COUNT, movie.getVoteCount());
+
+        long rows = db.insert(MovieDBContract.MovieEntry.TABLE_NAME, MovieDBContract.MovieEntry.COLUMN_MOVIE_RELEASE_DATE, movieContentValues);
+
+        if (rows != -1) {
+            ContentValues favContentValues = new ContentValues();
+            favContentValues.put(MovieDBContract.FavouriteEntry.COLUMN_MOVIE_KEY, movie.getId());
+
+            rows = db.insert(MovieDBContract.FavouriteEntry.TABLE_NAME, MovieDBContract.FavouriteEntry.COLUMN_MOVIE_KEY, favContentValues);
+        }
+
+        return (rows != -1);
+    }
+
+    /**
+     *
+     * @param db
+     * @param movie
+     * @return
+     */
+    private boolean removeFavourite(SQLiteDatabase db, Movie movie) {
+        String where = MovieDBContract.MovieEntry._ID + " = ?";
+        String[] whereArgs1 = {String.valueOf(movie.getId())};
+        int rows = db.delete(MovieDBContract.MovieEntry.TABLE_NAME, where, whereArgs1);
+
+        if (rows > 0) {
+            where = MovieDBContract.FavouriteEntry.COLUMN_MOVIE_KEY + " = ?";
+            String[] whereArgs2 = {String.valueOf(movie.getId())};
+            rows = db.delete(MovieDBContract.FavouriteEntry.TABLE_NAME, where, whereArgs2);
+        }
+        return (rows > 0);
+    }
+
+    /**
+     *
+     * @param db
+     * @param movie
+     * @return
+     */
+    private boolean isFavourite(SQLiteDatabase db, Movie movie) {
+        String[] columns = {MovieDBContract.FavouriteEntry.COLUMN_MOVIE_KEY};
+        String selection = MovieDBContract.FavouriteEntry.COLUMN_MOVIE_KEY + " = ?";
+        String[] selectionArgs = {String.valueOf(movie.getId())};
+        Cursor cursor = db.query(MovieDBContract.FavouriteEntry.TABLE_NAME, columns,
+                selection, selectionArgs, null, null, null);
+
+        boolean ret = (cursor.getCount() != 0);
+        cursor.close();
+
+        return ret;
+
     }
 
     @Override
@@ -133,6 +237,10 @@ public class DetailedViewActivityFragment extends Fragment {
         LocalBroadcastManager.getInstance(parent).unregisterReceiver(broadcastReceiver);
     }
 
+    /**
+     *
+     * @param movieId
+     */
     private void fetchMovieDetails(int movieId) {
         MovieDataFetchHelperService.startActionFetchMovie(parent, movieId);
     }

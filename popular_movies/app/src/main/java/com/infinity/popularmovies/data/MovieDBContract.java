@@ -5,8 +5,8 @@ import android.provider.BaseColumns;
 /**
  * Created by KBabu on 05-Dec-15.
  */
-class MovieDBContract {
-    static final class MovieEntry implements BaseColumns {
+public class MovieDBContract {
+    public static final class MovieEntry implements BaseColumns {
         public static final String TABLE_NAME = "movies";
 
         public static final String COLUMN_MOVIE_TITLE = "title";
@@ -20,7 +20,7 @@ class MovieDBContract {
 
     }
 
-    static final class FavouriteEntry implements BaseColumns {
+    public static final class FavouriteEntry implements BaseColumns {
         public static final String TABLE_NAME = "favourites";
 
         public static final String COLUMN_MOVIE_KEY = "movie_id";
