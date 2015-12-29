@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -20,10 +22,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.infinity.popularmovies.data.FavouritesOpenHelper;
 import com.infinity.popularmovies.data.Movie;
+import com.infinity.popularmovies.data.MovieDBContract;
 import com.infinity.popularmovies.data.MovieFetchServiceContract;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class MainActivityFragment extends Fragment {
@@ -171,7 +178,15 @@ public class MainActivityFragment extends Fragment {
                 break;
 
             case R.id.action_favourite_sort:
-                Toast.makeText(getContext(), "Feature not yet available", Toast.LENGTH_SHORT).show();
+                List<Movie> movies = getFavouritesList();
+                movieList.clear();
+                movieList.addAll(movies);
+                ((ImageViewAdapter) imageAdapter).updateImageDataSet(movieList);
+                imageAdapter.notifyDataSetChanged();
+
+                sharedPref.edit().putString(getString(R.string.preferences_movie_sort_order),
+                        MovieFetchServiceContract.SORT_SETTING_FAVOURITE).apply();
+
                 break;
 
             default:
@@ -179,6 +194,59 @@ public class MainActivityFragment extends Fragment {
         }
 
         return true;
+    }
+
+    private List<Movie> getFavouritesList() {
+        List<Movie> movies = new ArrayList<>();
+        FavouritesOpenHelper dbHelper = new FavouritesOpenHelper(getContext());
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String[] favColumns = {MovieDBContract.FavouriteEntry.COLUMN_MOVIE_KEY};
+        Cursor favCursor = db.query(MovieDBContract.FavouriteEntry.TABLE_NAME, favColumns, null, null, null, null, null);
+        if (favCursor.moveToFirst()) {
+            do {
+                String[] columns = { MovieDBContract.MovieEntry._ID,
+                                     MovieDBContract.MovieEntry.COLUMN_MOVIE_TITLE,
+                                     MovieDBContract.MovieEntry.COLUMN_MOVIE_PLOT,
+                                     MovieDBContract.MovieEntry.COLUMN_MOVIE_POSTER,
+                                     MovieDBContract.MovieEntry.COLUMN_MOVIE_RELEASE_DATE,
+                                     MovieDBContract.MovieEntry.COLUMN_MOVIE_RATING,
+                                     MovieDBContract.MovieEntry.COLUMN_MOVIE_VOTE_COUNT };
+
+                String selection = MovieDBContract.MovieEntry._ID + " = ?";
+                String[] selectionArgs = {String.valueOf(favCursor.getInt(0))};
+                Cursor cursor = db.query(MovieDBContract.MovieEntry.TABLE_NAME, columns,
+                        selection, selectionArgs, null, null, null);
+                if (cursor.moveToFirst()) {
+                    int id = cursor.getInt(0);
+                    String title = cursor.getString(1);
+                    String plot = cursor.getString(2);
+                    String poster = cursor.getString(3);
+                    String date = cursor.getString(4);
+
+                    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+                    Date releaseDate = null;
+                    try {
+                        releaseDate = df.parse(date);
+                    } catch (ParseException e) {
+                        Log.e(LOG_TAG, "Movie " + title + ", " + date + " : " + e.getMessage());
+                    }
+
+                    double rating = cursor.getDouble(5);
+                    int voteCount = cursor.getInt(6);
+
+                    Movie movie = new Movie(id, title, "en", poster, plot, rating, voteCount, 0, releaseDate, null, null);
+                    movies.add(movie);
+
+                    cursor.close();
+                }
+
+            } while (favCursor.moveToNext());
+        }
+
+        favCursor.close();
+        db.close();
+        return movies;
+
     }
 
     @Override
