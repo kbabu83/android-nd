@@ -69,7 +69,7 @@ public class MainActivityFragment extends Fragment {
     public MainActivityFragment() { }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
         sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);

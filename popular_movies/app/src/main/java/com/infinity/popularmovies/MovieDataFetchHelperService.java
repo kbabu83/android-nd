@@ -148,7 +148,7 @@ public class MovieDataFetchHelperService extends IntentService {
     private void handleActionDiscover(int page, String sortBy, int minVotes) {
         createTMDBConfig();
         Call<TmdbResponse> tmdbResponseCall = service.discoverMovies(TMDB_API_VERSION,
-                APIKey.TMDB_API_KEY, sortBy, page, minVotes);
+                APIKey.TMDB_API_KEY, sortBy, minVotes, page);
         try {
             TmdbResponse tmdbResponse = tmdbResponseCall.execute().body();
             List<MovieResponse> movieResults = tmdbResponse.getResults();
