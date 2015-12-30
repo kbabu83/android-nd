@@ -157,7 +157,8 @@ public class DetailedViewActivityFragment extends Fragment {
         movieContentValues.put(MovieDBContract.MovieEntry.COLUMN_MOVIE_TITLE, movie.getTitle());
         movieContentValues.put(MovieDBContract.MovieEntry.COLUMN_MOVIE_PLOT, movie.getSynopsis());
         movieContentValues.put(MovieDBContract.MovieEntry.COLUMN_MOVIE_POSTER, movie.getPosterThumbnail());
-        movieContentValues.put(MovieDBContract.MovieEntry.COLUMN_MOVIE_RELEASE_DATE, movie.getReleaseDate().toString());
+        movieContentValues.put(MovieDBContract.MovieEntry.COLUMN_MOVIE_RELEASE_DATE,
+                new SimpleDateFormat("yyyy-MM-dd").format(movie.getReleaseDate()));
         movieContentValues.put(MovieDBContract.MovieEntry.COLUMN_MOVIE_RATING, movie.getRating());
         movieContentValues.put(MovieDBContract.MovieEntry.COLUMN_MOVIE_VOTE_COUNT, movie.getVoteCount());
 

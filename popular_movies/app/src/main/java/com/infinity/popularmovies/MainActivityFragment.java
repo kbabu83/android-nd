@@ -186,6 +186,7 @@ public class MainActivityFragment extends Fragment {
 
                 sharedPref.edit().putString(getString(R.string.preferences_movie_sort_order),
                         MovieFetchServiceContract.SORT_SETTING_FAVOURITE).apply();
+                item.setChecked(true);
 
                 break;
 
