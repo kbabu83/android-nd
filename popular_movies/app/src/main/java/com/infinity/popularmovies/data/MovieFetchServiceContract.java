@@ -24,7 +24,7 @@ public class MovieFetchServiceContract {
     public static final String EXTRA_MOVIE_TRAILERS = "com.infinity.popularmovies.extra.MOVIES";
     public static final String EXTRA_MOVIE_REVIEWS = "com.infinity.popularmovies.extra.REVIEWS";
 
-    public static final int DEFAULT_MIN_VOTES_REQ = 1;
+    public static final int DEFAULT_MIN_VOTES_REQ = 20;
     public static final String SORT_SETTING_POPULARITY = "com.infinity.popularmovies.POPULARITY";
     public static final String SORT_SETTING_RATING = "com.infinity.popularmovies.VOTE_AVERAGE";
     public static final String SORT_SETTING_FAVOURITE = "com.infinity.popularmovies.USER_FAVOURITES";

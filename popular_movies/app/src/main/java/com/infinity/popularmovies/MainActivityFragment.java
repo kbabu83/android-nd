@@ -118,9 +118,9 @@ public class MainActivityFragment extends Fragment {
                     return;
 
                 int itemCount = layoutManager.getItemCount();
-                //int firstVisible = layoutManager.findFirstVisibleItemPosition();
+                int firstVisible = layoutManager.findFirstVisibleItemPosition();
                 int lastVisible = layoutManager.findLastVisibleItemPosition();
-                //Log.v(LOG_TAG, "Visible positions: " + firstVisible + ", " + lastVisible + ", " + itemCount);
+                Log.v(LOG_TAG, "Visible positions: " + firstVisible + ", " + lastVisible + ", " + itemCount);
 
                 if (lastVisible >= (itemCount - threshold) && mScrollPage <= currentPage) {
                     startMovieDiscovery(mScrollPage);
@@ -128,6 +128,15 @@ public class MainActivityFragment extends Fragment {
                 }
             }
         });
+
+        String sortSetting = sharedPref.getString(getString(R.string.preferences_movie_sort_order), "");
+        if (sortSetting.equals(MovieFetchServiceContract.SORT_SETTING_FAVOURITE)) {
+            List<Movie> movies = getFavouritesList();
+            movieList.clear();
+            movieList.addAll(movies);
+            ((ImageViewAdapter) imageAdapter).updateImageDataSet(movieList);
+            imageAdapter.notifyDataSetChanged();
+        }
 
         return rootView;
     }
@@ -256,7 +265,9 @@ public class MainActivityFragment extends Fragment {
         LocalBroadcastManager.getInstance(getActivity().getApplicationContext()).registerReceiver(
                 receiver, intentFilter);
 
-        startMovieDiscovery(currentPage);
+        String sortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), "");
+        if (!sortOrder.equals(MovieFetchServiceContract.SORT_SETTING_FAVOURITE))
+            startMovieDiscovery(currentPage);
     }
 
     @Override

@@ -72,7 +72,7 @@ public class MovieDataFetchHelperService extends IntentService {
      * @see IntentService
      */
     public static void startActionDiscover(Context context, int page, String sortBy, int minVotes) {
-        String sortSetting = "";
+        String sortSetting;
         switch (sortBy) {
             case MovieFetchServiceContract.SORT_SETTING_POPULARITY:
                 sortSetting = TMDB_QUERY_SORT_POPULARITY_DESC;
@@ -84,7 +84,7 @@ public class MovieDataFetchHelperService extends IntentService {
 
             case MovieFetchServiceContract.SORT_SETTING_FAVOURITE:
             default:
-                break;
+                return;
         }
 
         Intent intent = new Intent(context, MovieDataFetchHelperService.class);
@@ -93,6 +93,7 @@ public class MovieDataFetchHelperService extends IntentService {
         intent.putExtra(MovieFetchServiceContract.EXTRA_SORT_BY, sortSetting);
         intent.putExtra(MovieFetchServiceContract.EXTRA_MIN_VOTES, minVotes);
         context.startService(intent);
+
     }
 
     /**
