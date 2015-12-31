@@ -98,6 +98,11 @@ public class Movie implements Parcelable {
 
     }
 
+    @Override
+    public String toString() {
+        return getPosterThumbnail();
+    }
+
     public int getId() {
         return id;
     }

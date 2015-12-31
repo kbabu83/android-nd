@@ -1,15 +1,14 @@
 package com.infinity.popularmovies;
 
 import android.content.Context;
-import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.infinity.popularmovies.data.Movie;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -18,9 +17,9 @@ import java.util.List;
 /**
  * Created by KBabu on 30-Nov-15.
  */
-public class ImageViewAdapter extends RecyclerView.Adapter<ImageViewAdapter.ViewHolder> {
+public class ImageViewAdapter<T> extends RecyclerView.Adapter<ImageViewAdapter.ViewHolder> {
     private static final String LOG_TAG = ImageViewAdapter.class.getSimpleName();
-    private List<Movie> dataset;
+    private List<T> dataset;
     private Context context;
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -40,18 +39,21 @@ public class ImageViewAdapter extends RecyclerView.Adapter<ImageViewAdapter.View
 
         @Override
         public void onClick(View v) {
-            Intent intent = new Intent(v.getContext(), DetailedViewActivity.class);
-            Movie movie = dataset.get(viewHolder.position);
-            intent.putExtra("selected_movie", movie);
-            context.startActivity(intent);
+            try {
+                MainActivityFragment.ListItemClickListener<T> l = (MainActivityFragment.ListItemClickListener<T>) context;
+                l.onImageListItemClicked(dataset.get(viewHolder.position));
+            }
+            catch (ClassCastException e) {
+                Log.e(LOG_TAG, "Class cast failed; posting a message won't work");
+            }
         }
     }
 
-    public ImageViewAdapter(Context c, List<Movie> movieData) {
+    public ImageViewAdapter(Context c, List<T> tList) {
         context = c;
         dataset = new ArrayList<>();
-        if (movieData != null)
-            dataset.addAll(movieData);
+        if (tList != null)
+            dataset.addAll(tList);
     }
 
     @Override
@@ -66,7 +68,8 @@ public class ImageViewAdapter extends RecyclerView.Adapter<ImageViewAdapter.View
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         holder.position = position;
-        String thumbnail = dataset.get(position).getPosterThumbnail();
+        T item = dataset.get(position);
+        String thumbnail = item.toString();
         Picasso.with(context).load(thumbnail).placeholder(R.drawable.no_preview_available).into((ImageView) holder.itemView);
     }
 
@@ -75,7 +78,7 @@ public class ImageViewAdapter extends RecyclerView.Adapter<ImageViewAdapter.View
         return dataset.size();
     }
 
-    public void updateImageDataSet(@NonNull List<Movie> imageData) {
+    public void updateImageDataSet(@NonNull List<T> imageData) {
         dataset.clear();
         dataset.addAll(imageData);
     }

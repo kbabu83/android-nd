@@ -6,12 +6,12 @@
         android:orderInCategory="90"
         android:title="@string/action_title_sort_by"
         android:icon="@drawable/view_sort_descending"
-        app:showAsAction="always">
+        app:showAsAction="ifRoom">
 
         <!-- Sort options submenu-->
         <menu android:id="@+id/sort_order_submenu">
             <group android:id="@+id/sort_order_group"
-                android:checkableBehavior="single" >
+                android:checkableBehavior="single">
                 <item android:id="@+id/action_popularity_sort"
                     android:title="@string/action_sort_by_popularity" />
 
@@ -29,4 +29,5 @@
         android:orderInCategory="100"
         android:title="@string/action_settings"
         app:showAsAction="never" />
+
 </menu>

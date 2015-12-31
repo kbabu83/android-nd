@@ -4,8 +4,8 @@
     tools:context="com.infinity.popularmovies.DetailedViewActivity">
     <item
         android:id="@+id/action_set_favourite"
-        android:orderInCategory="100"
+        android:orderInCategory="85"
         android:title="@string/action_add_favourite"
         android:icon="@android:drawable/btn_star_big_off"
-        app:showAsAction="always" />
+        app:showAsAction="ifRoom" />
 </menu>

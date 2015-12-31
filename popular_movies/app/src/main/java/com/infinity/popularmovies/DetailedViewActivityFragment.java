@@ -100,7 +100,12 @@ public class DetailedViewActivityFragment extends Fragment {
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.menu_detailed_view, menu);
+        MenuItem sortOrder = menu.findItem(R.id.action_change_sort_order);
+        if (sortOrder != null) {
+            sortOrder.setVisible(false);
+        }
     }
 
     @Override
@@ -217,8 +222,9 @@ public class DetailedViewActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, final ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detailed_view, container, false);
-        Intent intent = parent.getIntent();
-        movie = intent.getParcelableExtra("selected_movie");
+
+        Bundle args = getArguments();
+        movie = args.getParcelable("selected_movie");
         if (movie == null)
             return rootView;
 

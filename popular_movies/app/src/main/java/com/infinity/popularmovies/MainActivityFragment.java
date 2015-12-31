@@ -1,5 +1,6 @@
 package com.infinity.popularmovies;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -20,6 +22,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.infinity.popularmovies.data.FavouritesOpenHelper;
@@ -37,6 +40,7 @@ public class MainActivityFragment extends Fragment {
 
     private final String LOG_TAG = getClass().getSimpleName();
 
+    private Activity parent;
     private List<Movie> movieList = new ArrayList<>();
     private RecyclerView.Adapter imageAdapter = null;
     private IntentFilter intentFilter = new IntentFilter();
@@ -66,11 +70,22 @@ public class MainActivityFragment extends Fragment {
         }
     };
 
+    public interface ListItemClickListener<T> {
+
+        /**
+         *
+         * @param clickedItem
+         */
+        public void onImageListItemClicked(T clickedItem);
+
+    }
+
     public MainActivityFragment() { }
 
     @Override
      public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        parent = getActivity();
         setHasOptionsMenu(true);
         sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
         String movieSortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), "");
@@ -91,6 +106,7 @@ public class MainActivityFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        rootView.setBackgroundColor(Color.WHITE);
         RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.list_view_movies);
         if (recyclerView == null) {
             Log.e(LOG_TAG, "No GridView instance available in Fragment");
@@ -98,7 +114,7 @@ public class MainActivityFragment extends Fragment {
         }
 
         intentFilter.addAction(MovieFetchServiceContract.REPLY_DISCOVER_MOVIES_UPDATE);
-        imageAdapter = new ImageViewAdapter(getActivity(), movieList);
+        imageAdapter = new ImageViewAdapter<>(getActivity(), movieList);
         recyclerView.setAdapter(imageAdapter);
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             private int mScrollPage = currentPage;
@@ -268,6 +284,12 @@ public class MainActivityFragment extends Fragment {
         String sortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), "");
         if (!sortOrder.equals(MovieFetchServiceContract.SORT_SETTING_FAVOURITE))
             startMovieDiscovery(currentPage);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        getActivity().setTitle(R.string.app_name);
     }
 
     @Override
