@@ -231,7 +231,6 @@ public class DetailedViewActivityFragment extends Fragment {
         super.onStart();
         LocalBroadcastManager.getInstance(parent).registerReceiver(broadcastReceiver, intentFilter);
         fetchMovieDetails(movie.getId());
-        fetchMovieDetails(movie.getId());
     }
 
     @Override
