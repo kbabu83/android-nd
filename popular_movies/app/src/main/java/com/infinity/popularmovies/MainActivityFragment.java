@@ -8,7 +8,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Color;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -22,7 +21,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.infinity.popularmovies.data.FavouritesOpenHelper;
@@ -42,7 +40,7 @@ public class MainActivityFragment extends Fragment {
 
     private Activity parent;
     private List<Movie> movieList = new ArrayList<>();
-    private RecyclerView.Adapter imageAdapter = null;
+    private ImageViewAdapter<Movie> imageAdapter = null;
     private IntentFilter intentFilter = new IntentFilter();
     private SharedPreferences sharedPref = null;
     private int currentPage = 0;
@@ -63,7 +61,7 @@ public class MainActivityFragment extends Fragment {
                             movieList.add((Movie) p);
                     }
 
-                    ((ImageViewAdapter) imageAdapter).updateImageDataSet(movieList);
+                    imageAdapter.updateImageDataSet(movieList);
                     imageAdapter.notifyDataSetChanged();
                 }
             }
@@ -87,7 +85,7 @@ public class MainActivityFragment extends Fragment {
         super.onCreate(savedInstanceState);
         parent = getActivity();
         setHasOptionsMenu(true);
-        sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        sharedPref = parent.getPreferences(Context.MODE_PRIVATE);
         String movieSortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), "");
         if (movieSortOrder.equals("")) {
             Log.v(LOG_TAG, "No preferences; creating defaults");
@@ -106,7 +104,6 @@ public class MainActivityFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        rootView.setBackgroundColor(Color.WHITE);
         RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.list_view_movies);
         if (recyclerView == null) {
             Log.e(LOG_TAG, "No GridView instance available in Fragment");
@@ -150,7 +147,7 @@ public class MainActivityFragment extends Fragment {
             List<Movie> movies = getFavouritesList();
             movieList.clear();
             movieList.addAll(movies);
-            ((ImageViewAdapter) imageAdapter).updateImageDataSet(movieList);
+            imageAdapter.updateImageDataSet(movieList);
             imageAdapter.notifyDataSetChanged();
         }
 
@@ -206,7 +203,7 @@ public class MainActivityFragment extends Fragment {
                 List<Movie> movies = getFavouritesList();
                 movieList.clear();
                 movieList.addAll(movies);
-                ((ImageViewAdapter) imageAdapter).updateImageDataSet(movieList);
+                imageAdapter.updateImageDataSet(movieList);
                 imageAdapter.notifyDataSetChanged();
 
                 sharedPref.edit().putString(getString(R.string.preferences_movie_sort_order),
