@@ -21,16 +21,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".DetailedViewActivity"
-            android:label="@string/title_activity_detailed_view"
-            android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.infinity.popularmovies.MainActivity" />
-        </activity>
-
         <service
             android:name=".MovieDataFetchHelperService"
             android:enabled="true"

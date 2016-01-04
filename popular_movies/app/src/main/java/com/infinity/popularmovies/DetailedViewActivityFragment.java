@@ -12,6 +12,8 @@ import android.net.Uri;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -46,6 +48,13 @@ public class DetailedViewActivityFragment extends Fragment {
     private IntentFilter intentFilter = new IntentFilter();
 
     public DetailedViewActivityFragment() { }
+
+    public interface DetailsFragmentInteractionListener {
+        /**
+         *
+         */
+        public void onFragmentNotify();
+    }
 
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -96,6 +105,23 @@ public class DetailedViewActivityFragment extends Fragment {
         intentFilter.addAction(MovieFetchServiceContract.REPLY_FETCH_MOVIE_REVIEWS);
 
         setHasOptionsMenu(true);
+
+        if(parent instanceof AppCompatActivity) {
+            ActionBar actionBar = ((AppCompatActivity) parent).getSupportActionBar();
+            if(actionBar != null)
+                actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(parent instanceof AppCompatActivity) {
+            ActionBar actionBar = ((AppCompatActivity) parent).getSupportActionBar();
+            if(actionBar != null)
+                actionBar.setDisplayHomeAsUpEnabled(false);
+        }
+
     }
 
     @Override
@@ -123,6 +149,7 @@ public class DetailedViewActivityFragment extends Fragment {
         db.close();
     }
 
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_set_favourite) {
@@ -145,6 +172,9 @@ public class DetailedViewActivityFragment extends Fragment {
 
             db.close();
             return true;
+        }
+        else if (item.getItemId() == android.R.id.home) {
+
         }
 
         return super.onOptionsItemSelected(item);
