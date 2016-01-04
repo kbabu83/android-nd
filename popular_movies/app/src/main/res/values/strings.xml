@@ -12,7 +12,9 @@
     <string name="txt_movie_release_date_title">Release Date:</string>
     <string name="txt_movie_duration_title">Duration:</string>
     <string name="txt_movie_trailers_title">Trailers</string>
+    <string name="txt_movie_no_trailers_info">No trailers found</string>
     <string name="txt_movie_reviews_title">Reviews</string>
+    <string name="txt_movie_no_reviews_info">No reviews found</string>
     <string name="txt_powered_by_tmdb">Data source: TMDB Open API (https://www.themoviedb.org/documentation/api)</string>
 
     <string name="preferences_file_key" translatable="false">com.infinity.popularmovies.PREFERENCE_FILE_KEY</string>

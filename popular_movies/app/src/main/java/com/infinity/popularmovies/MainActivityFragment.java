@@ -44,13 +44,15 @@ public class MainActivityFragment extends Fragment {
     private IntentFilter intentFilter = new IntentFilter();
     private SharedPreferences sharedPref = null;
     private int currentPage = 0;
+    private boolean requestPending = false;
 
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (MovieFetchServiceContract.REPLY_DISCOVER_MOVIES_UPDATE.equals(action)) {
-                Log.v(LOG_TAG, "Discovery results available");
+                Log.v(LOG_TAG, "Discovery results available: " + String.valueOf(currentPage+1));
+                requestPending = false;
                 int page = intent.getIntExtra(MovieFetchServiceContract.EXTRA_PAGE_NUM, 1);
                 if (page > currentPage) {
                     currentPage = page;
@@ -68,14 +70,45 @@ public class MainActivityFragment extends Fragment {
         }
     };
 
+    /**
+     *
+     * @param <T>
+     */
     public interface ListItemClickListener<T> {
-
         /**
          *
          * @param clickedItem
          */
-        public void onImageListItemClicked(T clickedItem);
+        void onImageListItemClicked(T clickedItem);
+    }
 
+    /**
+     *
+     */
+    public class RecyclerViewScrollListenerImpl extends RecyclerView.OnScrollListener {
+
+        @Override
+        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            super.onScrollStateChanged(recyclerView, newState);
+        }
+
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+            final int threshold = 2 * getResources().getInteger(R.integer.main_grid_span_count);
+            GridLayoutManager layoutManager = (GridLayoutManager)recyclerView.getLayoutManager();
+            if (layoutManager == null)
+                return;
+
+            int itemCount = layoutManager.getItemCount();
+            //int firstVisible = layoutManager.findFirstVisibleItemPosition();
+            int lastVisible = layoutManager.findLastVisibleItemPosition();
+            //Log.v(LOG_TAG, "Visible positions: " + firstVisible + ", " + lastVisible + ", " + itemCount + " :: " + currentPage);
+
+            if (lastVisible >= (itemCount - threshold) && !requestPending) {
+                startMovieDiscovery(currentPage);
+            }
+        }
     }
 
     public MainActivityFragment() { }
@@ -113,7 +146,9 @@ public class MainActivityFragment extends Fragment {
         intentFilter.addAction(MovieFetchServiceContract.REPLY_DISCOVER_MOVIES_UPDATE);
         imageAdapter = new ImageViewAdapter<>(getActivity(), movieList);
         recyclerView.setAdapter(imageAdapter);
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        recyclerView.addOnScrollListener(new RecyclerViewScrollListenerImpl());
+
+        /*recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             private int mScrollPage = currentPage;
 
             @Override
@@ -140,7 +175,7 @@ public class MainActivityFragment extends Fragment {
                     ++mScrollPage;
                 }
             }
-        });
+        });*/
 
         String sortSetting = sharedPref.getString(getString(R.string.preferences_movie_sort_order), "");
         if (sortSetting.equals(MovieFetchServiceContract.SORT_SETTING_FAVOURITE)) {
@@ -195,7 +230,7 @@ public class MainActivityFragment extends Fragment {
                     item.setChecked(true);
                     currentPage = 0;
                     movieList.clear();
-                    startMovieDiscovery(0);
+                    startMovieDiscovery(currentPage);
                 }
                 break;
 
@@ -303,9 +338,12 @@ public class MainActivityFragment extends Fragment {
      * @param currentpage The current page shown on screen if content is already shown; else 0.
      */
     private void startMovieDiscovery(int currentpage) {
+        int next = currentpage + 1;
+        Log.v(LOG_TAG, "Start discovery: " + next);
         String sortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), null);
         int minVotes = sharedPref.getInt(getString(R.string.preferences_movie_discover_min_votes), 0);
-        MovieDataFetchHelperService.startActionDiscover(getActivity(), ++currentpage, sortOrder, minVotes);
+        MovieDataFetchHelperService.startActionDiscover(getActivity(), next, sortOrder, minVotes);
+        requestPending = true;
     }
 
 }

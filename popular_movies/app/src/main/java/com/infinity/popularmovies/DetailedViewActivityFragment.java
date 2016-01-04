@@ -17,6 +17,8 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,6 +26,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,8 +52,6 @@ public class DetailedViewActivityFragment extends Fragment {
 
     private IntentFilter intentFilter = new IntentFilter();
 
-    public DetailedViewActivityFragment() { }
-
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -66,8 +67,8 @@ public class DetailedViewActivityFragment extends Fragment {
 
                 case MovieFetchServiceContract.REPLY_FETCH_MOVIE_TRAILERS:
                     List<Video> videos = intent.getParcelableArrayListExtra(MovieFetchServiceContract.EXTRA_MOVIE_TRAILERS);
-                    if (videos == null || videos.size() == 0) {
-                        Log.v(LOG_TAG, "No videos available for movie");
+                    if (videos == null) {
+                        Log.v(LOG_TAG, "No video records retrieved for movie");
                         return;
                     }
                     movie.setTrailers(videos);
@@ -76,8 +77,8 @@ public class DetailedViewActivityFragment extends Fragment {
 
                 case MovieFetchServiceContract.REPLY_FETCH_MOVIE_REVIEWS:
                     List<Review> reviews = intent.getParcelableArrayListExtra(MovieFetchServiceContract.EXTRA_MOVIE_REVIEWS);
-                    if (reviews == null || reviews.size() ==0) {
-                        Log.v(LOG_TAG, "No reviews available for movie");
+                    if (reviews == null) {
+                        Log.v(LOG_TAG, "No review records retrieved for movie");
                         return;
                     }
                     movie.setReviews(reviews);
@@ -169,25 +170,231 @@ public class DetailedViewActivityFragment extends Fragment {
             return true;
         }
         else if (item.getItemId() == android.R.id.home) {
-            if(parent instanceof AppCompatActivity) {
-                ActionBar actionBar = ((AppCompatActivity) parent).getSupportActionBar();
-                if(actionBar != null) {
-                    actionBar.setDisplayHomeAsUpEnabled(false);
-                    actionBar.setTitle(R.string.app_name);
-                }
-
-            }
-
-            FragmentManager fragmentManager = getFragmentManager();
-            fragmentManager.beginTransaction()
-                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE)
-                    .commit();
-            fragmentManager.popBackStack();
-
+            closeFragment();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, final ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_detailed_view, container, false);
+        rootView.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (keyCode == KeyEvent.KEYCODE_BACK) {
+                    closeFragment();
+                    return true;
+                }
+
+                return false;
+            }
+        });
+
+        Bundle args = getArguments();
+        movie = args.getParcelable("selected_movie");
+        if (movie == null)
+            return rootView;
+
+        updateViewContent();
+        return rootView;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        LocalBroadcastManager.getInstance(parent).registerReceiver(broadcastReceiver, intentFilter);
+        fetchMovieDetails(movie.getId());
+    }
+
+
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        LocalBroadcastManager.getInstance(parent).unregisterReceiver(broadcastReceiver);
+    }
+
+    /**
+     *
+     * @param movieId
+     */
+    private void fetchMovieDetails(int movieId) {
+        MovieDataFetchHelperService.startActionFetchMovie(parent, movieId);
+    }
+
+    /**
+     *
+     */
+    private void updateViewContent() {
+        if (parent == null || movie == null) {
+            return;
+        }
+
+        String movieName = movie.getTitle();
+        String moviePosterUrl = movie.getPosterThumbnail();
+        String moviePlot = movie.getSynopsis();
+        String movieRating = String.valueOf(movie.getRating());
+        String vote_count = String.valueOf(movie.getVoteCount());
+        Date releaseDate = movie.getReleaseDate();
+
+        if(parent instanceof AppCompatActivity) {
+            ActionBar actionBar = ((AppCompatActivity) parent).getSupportActionBar();
+            if(actionBar != null) {
+                actionBar.setTitle(movieName + " (" + (releaseDate.getYear() + 1900) + ")");
+            }
+        }
+
+        ImageView imageView = (ImageView) parent.findViewById(R.id.img_poster_view_large);
+        if (imageView != null) {
+            Picasso.with(getActivity()).load(moviePosterUrl).into(imageView);
+        }
+
+        TextView ratingText = (TextView) parent.findViewById(R.id.txt_movie_rating);
+        if (ratingText != null) {
+            ratingText.setText(movieRating + "/10\t(" + vote_count + " votes)");
+        }
+
+        TextView plotText = (TextView) parent.findViewById(R.id.txt_movie_plot);
+        if (plotText != null) {
+            plotText.setText(moviePlot);
+        }
+
+        TextView runtimeText = (TextView) parent.findViewById(R.id.txt_movie_duration);
+        if (runtimeText != null) {
+            runtimeText.setText(String.valueOf(movie.getDuration()) + " mins");
+        }
+
+        TextView relDateText = (TextView) parent.findViewById(R.id.txt_movie_date);
+        if (relDateText != null) {
+            relDateText.setText(new SimpleDateFormat("dd-MM-yyyy").format(releaseDate));
+        }
+
+        updateMovieTrailers();
+        updateMovieReviews();
+
+    }
+
+    /**
+     *
+     */
+    private void updateMovieTrailers() {
+        ViewGroup trailerListContainer = (ViewGroup) parent.findViewById(R.id.container_movie_trailers);
+        if (trailerListContainer == null || movie.getTrailers() == null) {
+            Log.v(LOG_TAG, "updateMovieTrailers: No trailer content to render");
+            return;
+        }
+
+        int childCount = trailerListContainer.getChildCount();
+        for (int i = childCount - 1; i > 1; --i) {
+            trailerListContainer.removeViewAt(i);
+        }
+
+        class ItemTextClickListener implements View.OnClickListener {
+            private String clickableLink;
+
+            public ItemTextClickListener(String link) {
+                this.clickableLink = link;
+            }
+
+            @Override
+            public void onClick(View v) {
+                Intent youtubeIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(clickableLink));
+                if (youtubeIntent.resolveActivity(parent.getPackageManager()) != null)
+                    startActivity(youtubeIntent);
+            }
+        }
+
+        List<Video> trailers = movie.getTrailers();
+        TextView text = (TextView)trailerListContainer.findViewById(R.id.txt_movie_no_trailers_found);
+        if (text != null) {
+            if (trailers.isEmpty()) {
+                text.setText(R.string.txt_movie_no_trailers_info);
+                return;
+            }
+            else {
+                text.setText("");
+            }
+        }
+
+        for (Video trailer : trailers) {
+            ViewGroup container = (ViewGroup) LayoutInflater.from(parent).inflate(
+                    R.layout.list_item_movie_trailer, trailerListContainer, false);
+
+            ImageView videoThumbnail = (ImageView) container.findViewById(R.id.thumbnail_preview);
+            Picasso.with(parent).load(trailer.getThumbnail()).
+                    placeholder(R.drawable.no_preview_available).into(videoThumbnail);
+
+            TextView titleText = (TextView) container.findViewById(R.id.txt_trailer_title);
+            titleText.setText(trailer.getName());
+
+            trailerListContainer.addView(container);
+            trailerListContainer.setOnClickListener(new ItemTextClickListener(trailer.getLink()));
+        }
+
+    }
+
+    /**
+     *
+     */
+    private void updateMovieReviews() {
+        ViewGroup reviewListContainer = (ViewGroup) parent.findViewById(R.id.container_movie_reviews);
+        if (reviewListContainer == null || movie.getReviews() == null) {
+            Log.v(LOG_TAG, "updateMovieReviews: No review content to render");
+            return;
+        }
+
+        int childCount = reviewListContainer.getChildCount();
+        for (int i = childCount - 1; i > 1; --i) {
+            reviewListContainer.removeViewAt(i);
+        }
+
+        List<Review> reviews = movie.getReviews();
+        TextView text = (TextView) reviewListContainer.findViewById(R.id.txt_movie_no_reviews_found);
+        if (text != null) {
+            if (reviews.isEmpty()) {
+                text.setText(R.string.txt_movie_no_reviews_info);
+                return;
+            }
+            else {
+                text.setText("");
+            }
+        }
+
+        for (Review review : reviews) {
+            ViewGroup container = (ViewGroup) LayoutInflater.from(parent).inflate(
+                    R.layout.list_item_movie_review, reviewListContainer, false);
+            TextView authorText = (TextView) container.findViewById(R.id.txt_movie_review_title);
+            authorText.setText(review.getAuthor());
+
+            TextView contentText = (TextView) container.findViewById(R.id.txt_movie_review_content);
+            contentText.setText(review.getContent());
+
+            reviewListContainer.addView(container);
+        }
+
+    }
+
+    /**
+     *
+     */
+    private void closeFragment() {
+        if(parent instanceof AppCompatActivity) {
+            ActionBar actionBar = ((AppCompatActivity) parent).getSupportActionBar();
+            if(actionBar != null) {
+                actionBar.setDisplayHomeAsUpEnabled(false);
+                actionBar.setTitle(R.string.app_name);
+            }
+
+        }
+
+        FragmentManager fragmentManager = getFragmentManager();
+        fragmentManager.beginTransaction()
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE)
+                .commit();
+        fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }
 
     /**
@@ -255,169 +462,6 @@ public class DetailedViewActivityFragment extends Fragment {
         cursor.close();
 
         return ret;
-
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, final ViewGroup container,
-                             Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_detailed_view, container, false);
-
-        Bundle args = getArguments();
-        movie = args.getParcelable("selected_movie");
-        if (movie == null)
-            return rootView;
-
-        updateViewContent();
-        return rootView;
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        LocalBroadcastManager.getInstance(parent).registerReceiver(broadcastReceiver, intentFilter);
-        fetchMovieDetails(movie.getId());
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        LocalBroadcastManager.getInstance(parent).unregisterReceiver(broadcastReceiver);
-    }
-
-    /**
-     *
-     * @param movieId
-     */
-    private void fetchMovieDetails(int movieId) {
-        MovieDataFetchHelperService.startActionFetchMovie(parent, movieId);
-    }
-
-    /**
-     *
-     */
-    private void updateViewContent() {
-        if (parent == null || movie == null) {
-            return;
-        }
-
-        String movieName = movie.getTitle();
-        String moviePosterUrl = movie.getPosterThumbnail();
-        String moviePlot = movie.getSynopsis();
-        String movieRating = String.valueOf(movie.getRating());
-        String vote_count = String.valueOf(movie.getVoteCount());
-        Date releaseDate = movie.getReleaseDate();
-        parent.setTitle(movieName + " (" + (releaseDate.getYear() + 1900) + ")");
-
-        ImageView imageView = (ImageView) parent.findViewById(R.id.img_poster_view_large);
-        if (imageView != null) {
-            Picasso.with(getActivity()).load(moviePosterUrl).into(imageView);
-        }
-
-        TextView ratingText = (TextView) parent.findViewById(R.id.txt_movie_rating);
-        if (ratingText != null) {
-            ratingText.setText(movieRating + "/10\t(" + vote_count + " votes)");
-        }
-
-        TextView plotText = (TextView) parent.findViewById(R.id.txt_movie_plot);
-        if (plotText != null) {
-            plotText.setText(moviePlot);
-        }
-
-        TextView runtimeText = (TextView) parent.findViewById(R.id.txt_movie_duration);
-        if (runtimeText != null) {
-            runtimeText.setText(String.valueOf(movie.getDuration()) + " mins");
-        }
-
-        TextView relDateText = (TextView) parent.findViewById(R.id.txt_movie_date);
-        if (relDateText != null) {
-            relDateText.setText(new SimpleDateFormat("dd-MM-yyyy").format(releaseDate));
-        }
-
-        if (movie.getTrailers() != null && !movie.getTrailers().isEmpty())
-            updateMovieTrailers();
-
-        if (movie.getReviews() != null && !movie.getReviews().isEmpty())
-            updateMovieReviews();
-
-    }
-
-    /**
-     *
-     */
-    private void updateMovieTrailers() {
-        ViewGroup trailerListContainer = (ViewGroup) parent.findViewById(R.id.container_movie_trailers);
-        if (trailerListContainer == null || movie.getTrailers() == null) {
-            Log.v(LOG_TAG, "updateMovieTrailers: No trailer content to render");
-            return;
-        }
-
-        int childCount = trailerListContainer.getChildCount();
-        for (int i = childCount - 1; i > 0; --i) {
-            trailerListContainer.removeViewAt(i);
-        }
-
-        class ItemTextClickListener implements View.OnClickListener {
-            private String clickableLink;
-
-            public ItemTextClickListener(String link) {
-                this.clickableLink = link;
-            }
-
-            @Override
-            public void onClick(View v) {
-                Intent youtubeIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(clickableLink));
-                if (youtubeIntent.resolveActivity(parent.getPackageManager()) != null)
-                    startActivity(youtubeIntent);
-            }
-        }
-
-        for (Video video : movie.getTrailers()) {
-            ViewGroup container = (ViewGroup) LayoutInflater.from(parent).inflate(
-                    R.layout.list_item_movie_trailer, trailerListContainer, false);
-
-            ImageView videoThumbnail = (ImageView) container.findViewById(R.id.thumbnail_preview);
-            Picasso.with(parent).load(video.getThumbnail()).
-                    placeholder(R.drawable.no_preview_available).into(videoThumbnail);
-
-            TextView titleText = (TextView) container.findViewById(R.id.txt_trailer_title);
-            titleText.setText(video.getName());
-
-            //titleText.setOnClickListener(new ItemTextClickListener(video.getLink()));
-
-            trailerListContainer.addView(container);
-            trailerListContainer.setOnClickListener(new ItemTextClickListener(video.getLink()));
-        }
-
-    }
-
-    /**
-     *
-     */
-    private void updateMovieReviews() {
-        ViewGroup reviewListContainer = (ViewGroup) parent.findViewById(R.id.container_movie_reviews);
-        if (reviewListContainer == null || movie.getReviews() == null) {
-            Log.v(LOG_TAG, "updateMovieReviews: No review content to render");
-            return;
-        }
-
-        int childCount = reviewListContainer.getChildCount();
-        for (int i = childCount - 1; i > 0; --i) {
-            reviewListContainer.removeViewAt(i);
-        }
-
-        List<Review> reviews = movie.getReviews();
-        for (Review review : reviews) {
-            ViewGroup container = (ViewGroup) LayoutInflater.from(parent).inflate(
-                    R.layout.list_item_movie_review, reviewListContainer, false);
-            TextView authorText = (TextView) container.findViewById(R.id.txt_movie_review_title);
-            authorText.setText(review.getAuthor());
-
-            TextView contentText = (TextView) container.findViewById(R.id.txt_movie_review_content);
-            contentText.setText(review.getContent());
-
-            reviewListContainer.addView(container);
-        }
 
     }
 

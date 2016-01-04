@@ -10,4 +10,5 @@
     <dimen name="image_poster_default_width">185dp</dimen>
     <dimen name="image_poster_default_height">250dp</dimen>
     <dimen name="text_movie_name_default_width">180dp</dimen>
+
 </resources>
