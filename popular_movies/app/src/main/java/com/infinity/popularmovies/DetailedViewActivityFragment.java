@@ -11,6 +11,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -48,13 +50,6 @@ public class DetailedViewActivityFragment extends Fragment {
     private IntentFilter intentFilter = new IntentFilter();
 
     public DetailedViewActivityFragment() { }
-
-    public interface DetailsFragmentInteractionListener {
-        /**
-         *
-         */
-        public void onFragmentNotify();
-    }
 
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -174,7 +169,22 @@ public class DetailedViewActivityFragment extends Fragment {
             return true;
         }
         else if (item.getItemId() == android.R.id.home) {
+            if(parent instanceof AppCompatActivity) {
+                ActionBar actionBar = ((AppCompatActivity) parent).getSupportActionBar();
+                if(actionBar != null) {
+                    actionBar.setDisplayHomeAsUpEnabled(false);
+                    actionBar.setTitle(R.string.app_name);
+                }
 
+            }
+
+            FragmentManager fragmentManager = getFragmentManager();
+            fragmentManager.beginTransaction()
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE)
+                    .commit();
+            fragmentManager.popBackStack();
+
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
