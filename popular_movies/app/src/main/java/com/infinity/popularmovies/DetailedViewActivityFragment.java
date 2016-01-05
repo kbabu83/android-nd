@@ -17,7 +17,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -26,7 +25,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -259,7 +257,11 @@ public class DetailedViewActivityFragment extends Fragment {
 
         TextView plotText = (TextView) parent.findViewById(R.id.txt_movie_plot);
         if (plotText != null) {
-            plotText.setText(moviePlot);
+            if (moviePlot.isEmpty()) {
+                plotText.setText(R.string.txt_movie_no_synopsis_info);
+            } else {
+                plotText.setText(moviePlot);
+            }
         }
 
         TextView runtimeText = (TextView) parent.findViewById(R.id.txt_movie_duration);

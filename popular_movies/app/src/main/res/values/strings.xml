@@ -15,11 +15,57 @@
     <string name="txt_movie_no_trailers_info">No trailers found</string>
     <string name="txt_movie_reviews_title">Reviews</string>
     <string name="txt_movie_no_reviews_info">No reviews found</string>
+    <string name="txt_movie_no_synopsis_info">No overview found</string>
     <string name="txt_powered_by_tmdb">Data source: TMDB Open API (https://www.themoviedb.org/documentation/api)</string>
 
     <string name="preferences_file_key" translatable="false">com.infinity.popularmovies.PREFERENCE_FILE_KEY</string>
+
     <string name="preferences_movie_sort_order" translatable="false">com.infinity.popularmovies.MOVIE_SORT_ORDER</string>
+    <string name="preferences_movie_sort_order_popularity" translatable="false">com.infinity.popularmovies.POPULARITY</string>
+    <string name="preferences_movie_sort_order_rating" translatable="false">com.infinity.popularmovies.VOTE_AVERAGE</string>
+    <string name="preferences_movie_sort_order_favourites" translatable="false">com.infinity.popularmovies.USER_FAVOURITES</string>
+
     <string name="preferences_movie_discover_min_votes" translatable="false">com.infinity.popularmovies.MIN_VOTE_COUNT</string>
+    <string name="preferences_movie_discover_image_size" translatable="false">com.infinity.popularmovies.IMG_SIZE</string>
 
     <integer name="main_grid_span_count">3</integer>
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- Strings related to Settings -->
+
+    <!-- General settings -->
+    <string name="pref_user_sort_order">Movie sort order</string>
+    <string name="pref_user_sort_summary">Set the sorting order used to fetch the movie list</string>
+    <string-array name="pref_user_sort_order_list">
+        <item>@string/action_sort_by_popularity</item>
+        <item>@string/action_sort_by_rating</item>
+        <item>@string/action_sort_by_favourite</item>
+    </string-array>
+    <string-array name="pref_user_sort_order_values">
+        <item>@string/preferences_movie_sort_order_popularity</item>
+        <item>@string/preferences_movie_sort_order_rating</item>
+        <item>@string/preferences_movie_sort_order_favourites</item>
+    </string-array>
+
+    <string name="pref_default_image_size">Thumbnail size</string>
+    <string name="pref_image_size_summary">Larger thumbnails look better on bigger screens but the downloads are also larger</string>
+    <string-array name="pref_image_size_entries">
+        <item>w185</item>
+        <item>w300</item>
+        <item>w500</item>
+        <item>w780</item>
+    </string-array>
+    <string-array name="pref_image_size_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <string name="pref_minimum_vote_count">Minimum votes required</string>
+    <string name="pref_minimum_vote_count_summary">Set this higher to improve the quality of results (especially if you prefer movies with higher rating)</string>
+    <integer name="pref_min_vote_default">20</integer>
+
+    <string name="action_clear_favourites">Clear all favourites</string>
+
 </resources>

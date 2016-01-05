@@ -73,18 +73,14 @@ public class MovieDataFetchHelperService extends IntentService {
      */
     public static void startActionDiscover(Context context, int page, String sortBy, int minVotes) {
         String sortSetting;
-        switch (sortBy) {
-            case MovieFetchServiceContract.SORT_SETTING_POPULARITY:
-                sortSetting = TMDB_QUERY_SORT_POPULARITY_DESC;
-                break;
-
-            case MovieFetchServiceContract.SORT_SETTING_RATING:
-                sortSetting = TMDB_QUERY_SORT_VOTE_DESC;
-                break;
-
-            case MovieFetchServiceContract.SORT_SETTING_FAVOURITE:
-            default:
-                return;
+        if (MovieFetchServiceContract.SORT_SETTING_POPULARITY.equals(sortBy)) {
+            sortSetting = TMDB_QUERY_SORT_POPULARITY_DESC;
+        }
+        else if (MovieFetchServiceContract.SORT_SETTING_RATING.equals(sortBy)) {
+            sortSetting = TMDB_QUERY_SORT_VOTE_DESC;
+        }
+        else {
+            return;
         }
 
         Intent intent = new Intent(context, MovieDataFetchHelperService.class);

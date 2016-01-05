@@ -1,0 +1,38 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ListPreference
+        android:defaultValue="0"
+        android:entries="@array/pref_user_sort_order_list"
+        android:entryValues="@array/pref_user_sort_order_values"
+        android:key="@string/preferences_movie_sort_order"
+        android:positiveButtonText="@null"
+        android:negativeButtonText="@null"
+        android:title="@string/pref_user_sort_order"
+        android:summary="@string/pref_user_sort_summary"/>
+
+    <EditTextPreference
+        android:capitalize="none"
+        android:defaultValue="@integer/pref_min_vote_default"
+        android:inputType="numberDecimal"
+        android:key="@string/preferences_movie_discover_min_votes"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="@string/pref_minimum_vote_count"
+        android:summary="@string/pref_minimum_vote_count_summary" />
+
+    <ListPreference
+        android:defaultValue="0"
+        android:entries="@array/pref_image_size_entries"
+        android:entryValues="@array/pref_image_size_values"
+        android:key="@string/preferences_movie_discover_image_size"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_default_image_size"
+        android:summary="@string/pref_image_size_summary" />
+
+<!--    <Preference
+        android:title="@string/action_clear_favourites"
+        android:key="clear_favourites_action" />-->
+
+</PreferenceScreen>

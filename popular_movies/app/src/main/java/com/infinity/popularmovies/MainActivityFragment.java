@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Parcelable;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -118,7 +119,7 @@ public class MainActivityFragment extends Fragment {
         super.onCreate(savedInstanceState);
         parent = getActivity();
         setHasOptionsMenu(true);
-        sharedPref = parent.getPreferences(Context.MODE_PRIVATE);
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
         String movieSortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), "");
         if (movieSortOrder.equals("")) {
             Log.v(LOG_TAG, "No preferences; creating defaults");
@@ -126,11 +127,11 @@ public class MainActivityFragment extends Fragment {
                     MovieFetchServiceContract.SORT_SETTING_POPULARITY).apply();
         }
 
-        int minVotes = sharedPref.getInt(getString(R.string.preferences_movie_discover_min_votes), -1);
+        int minVotes = Integer.valueOf(sharedPref.getString(getString(R.string.preferences_movie_discover_min_votes), "-1"));
         if (minVotes == -1) {
             Log.v(LOG_TAG, "No min. vote preferences; creating defaults");
-            sharedPref.edit().putInt(getString(R.string.preferences_movie_discover_min_votes),
-                    MovieFetchServiceContract.DEFAULT_MIN_VOTES_REQ).apply();
+            sharedPref.edit().putString(getString(R.string.preferences_movie_discover_min_votes),
+                    String.valueOf(MovieFetchServiceContract.DEFAULT_MIN_VOTES_REQ)).apply();
         }
     }
 
@@ -341,7 +342,7 @@ public class MainActivityFragment extends Fragment {
         int next = currentpage + 1;
         Log.v(LOG_TAG, "Start discovery: " + next);
         String sortOrder = sharedPref.getString(getString(R.string.preferences_movie_sort_order), null);
-        int minVotes = sharedPref.getInt(getString(R.string.preferences_movie_discover_min_votes), 0);
+        int minVotes = Integer.valueOf(sharedPref.getString(getString(R.string.preferences_movie_discover_min_votes), "0"));
         MovieDataFetchHelperService.startActionDiscover(getActivity(), next, sortOrder, minVotes);
         requestPending = true;
     }
