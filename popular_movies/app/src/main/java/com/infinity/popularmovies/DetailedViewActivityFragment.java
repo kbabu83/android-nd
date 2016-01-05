@@ -41,7 +41,9 @@ import com.infinity.popularmovies.data.Video;
 import com.squareup.picasso.Picasso;
 
 /**
- * A placeholder fragment containing a simple view.
+ * A placeholder fragment holding the details of the user selected Movie.
+ * This is added to the MainActivity when the user selects a Movie from the GridView.
+ *
  */
 public class DetailedViewActivityFragment extends Fragment {
     private static final String LOG_TAG = DetailedViewActivityFragment.class.getSimpleName();
@@ -50,6 +52,9 @@ public class DetailedViewActivityFragment extends Fragment {
 
     private IntentFilter intentFilter = new IntentFilter();
 
+    /**
+     * BroadcastReceiver instance to handle updates from the IntentService
+     */
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -216,15 +221,16 @@ public class DetailedViewActivityFragment extends Fragment {
     }
 
     /**
-     *
-     * @param movieId
+     * Helper function to invoke the IntentService's fetch method
+     * @param movieId The movie ID whose details are to be fetched
      */
     private void fetchMovieDetails(int movieId) {
         MovieDataFetchHelperService.startActionFetchMovie(parent, movieId);
     }
 
     /**
-     *
+     * This method updates the Views in the Fragment with details from the 'movie' member
+     * variable
      */
     private void updateViewContent() {
         if (parent == null || movie == null) {
@@ -280,6 +286,8 @@ public class DetailedViewActivityFragment extends Fragment {
     }
 
     /**
+     * This method updates the Trailers section in the Fragment.
+     * If no trailers are available, a note is added to indicate this.
      *
      */
     private void updateMovieTrailers() {
@@ -339,6 +347,8 @@ public class DetailedViewActivityFragment extends Fragment {
     }
 
     /**
+     * This method updates the Reviews section in the Fragment.
+     * If no reviews are available, a note is added to indicate this.
      *
      */
     private void updateMovieReviews() {
@@ -380,7 +390,7 @@ public class DetailedViewActivityFragment extends Fragment {
     }
 
     /**
-     *
+     * Removes this fragment from the Activity's hierarchy
      */
     private void closeFragment() {
         if(parent instanceof AppCompatActivity) {
@@ -400,10 +410,10 @@ public class DetailedViewActivityFragment extends Fragment {
     }
 
     /**
-     *
-     * @param db
-     * @param movie
-     * @return
+     * Adds a movie to the list of user favourites
+     * @param db The writable SQLite database holding the favourites table
+     * @param movie The movie object which needs to be added as a favourite
+     * @return true if the INSERT was successful; false otherwise
      */
     private boolean addFavourite(SQLiteDatabase db, Movie movie) {
         ContentValues movieContentValues = new ContentValues();
@@ -429,10 +439,10 @@ public class DetailedViewActivityFragment extends Fragment {
     }
 
     /**
-     *
-     * @param db
-     * @param movie
-     * @return
+     * Removes a movie from the favourite list
+     * @param db The writable SQLite database holding the favourites table
+     * @param movie The movie object which is no longer a favourite
+     * @return true if movie was removed; false otherwise
      */
     private boolean removeFavourite(SQLiteDatabase db, Movie movie) {
         String where = MovieDBContract.MovieEntry._ID + " = ?";
@@ -448,10 +458,10 @@ public class DetailedViewActivityFragment extends Fragment {
     }
 
     /**
-     *
-     * @param db
-     * @param movie
-     * @return
+     * Returns true if the passed-in parameter movie is available in the DB as a favourite
+     * @param db The readable SQLite database to check for favourites
+     * @param movie The movie object to verify
+     * @return true if the movie is a favourite; false otherwise
      */
     private boolean isFavourite(SQLiteDatabase db, Movie movie) {
         String[] columns = {MovieDBContract.FavouriteEntry.COLUMN_MOVIE_KEY};

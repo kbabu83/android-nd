@@ -149,35 +149,6 @@ public class MainActivityFragment extends Fragment {
         recyclerView.setAdapter(imageAdapter);
         recyclerView.addOnScrollListener(new RecyclerViewScrollListenerImpl());
 
-        /*recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            private int mScrollPage = currentPage;
-
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-            }
-
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-
-                final int threshold = 2 * getResources().getInteger(R.integer.main_grid_span_count);
-                GridLayoutManager layoutManager = (GridLayoutManager)recyclerView.getLayoutManager();
-                if (layoutManager == null)
-                    return;
-
-                int itemCount = layoutManager.getItemCount();
-                int firstVisible = layoutManager.findFirstVisibleItemPosition();
-                int lastVisible = layoutManager.findLastVisibleItemPosition();
-                Log.v(LOG_TAG, "Visible positions: " + firstVisible + ", " + lastVisible + ", " + itemCount);
-
-                if (lastVisible >= (itemCount - threshold) && mScrollPage <= currentPage) {
-                    startMovieDiscovery(mScrollPage);
-                    ++mScrollPage;
-                }
-            }
-        });*/
-
         String sortSetting = sharedPref.getString(getString(R.string.preferences_movie_sort_order), "");
         if (sortSetting.equals(MovieFetchServiceContract.SORT_SETTING_FAVOURITE)) {
             List<Movie> movies = getFavouritesList();

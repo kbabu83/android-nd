@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Adapter class to render content in the MainActivity's GridView
  * Created by KBabu on 30-Nov-15.
  */
 public class ImageViewAdapter<T> extends RecyclerView.Adapter<ImageViewAdapter.ViewHolder> {
